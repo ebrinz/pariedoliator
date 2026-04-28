@@ -12,5 +12,5 @@ export function scorePhraseCoherence(words: string[]): number {
     pairCount++;
   }
 
-  return totalScore;
+  return pairCount > 0 ? totalScore / pairCount : 0;
 }

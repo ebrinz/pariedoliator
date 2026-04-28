@@ -84,6 +84,7 @@ export class VHSRenderer {
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
     gl.texImage2D(
       gl.TEXTURE_2D,
       0,

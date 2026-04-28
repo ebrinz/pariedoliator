@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useMemo } from "react";
 
 interface UseTTSReturn {
   speak: (text: string) => void;
@@ -31,5 +31,5 @@ export function useTTS(): UseTTSReturn {
     }
   }, []);
 
-  return { speak, setVolume, stop };
+  return useMemo(() => ({ speak, setVolume, stop }), [speak, setVolume, stop]);
 }

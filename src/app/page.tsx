@@ -53,53 +53,55 @@ export default function Home() {
   const animFrameRef = useRef<number>(0);
   const prevEntryCountRef = useRef(0);
 
-  // Task 17: Recording ref
   const recordingRef = useRef<{
     entries: TranscriptEntry[];
     coherenceLog: { time: number; score: number }[];
     startTime: number;
   }>({ entries: [], coherenceLog: [], startTime: 0 });
 
-  useEffect(() => {
-    noiseAudio.setVolume(noiseVolume);
-  }, [noiseVolume, noiseAudio]);
+  const { setVolume: setNoiseAudioVolume, feedSamples, getBufferedAudio } = noiseAudio;
+  const { setVolume: setTtsVolume2, speak, stop: stopTts } = tts;
+  const { isReady: whisperReady, loadModel, transcribe, entries: whisperEntries } = whisper;
 
   useEffect(() => {
-    tts.setVolume(ttsVolume);
-  }, [ttsVolume, tts]);
+    setNoiseAudioVolume(noiseVolume);
+  }, [noiseVolume, setNoiseAudioVolume]);
 
   useEffect(() => {
-    if (whisper.entries.length > prevEntryCountRef.current) {
-      const latest = whisper.entries[whisper.entries.length - 1];
+    setTtsVolume2(ttsVolume);
+  }, [ttsVolume, setTtsVolume2]);
+
+  useEffect(() => {
+    if (whisperEntries.length > prevEntryCountRef.current) {
+      const latest = whisperEntries[whisperEntries.length - 1];
       const text = latest.tokens.map((t) => t.text).join("");
-      tts.speak(text);
-      prevEntryCountRef.current = whisper.entries.length;
+      speak(text);
+      prevEntryCountRef.current = whisperEntries.length;
     }
-  }, [whisper.entries, tts]);
+  }, [whisperEntries, speak]);
 
   useEffect(() => {
     if (isRunning) {
-      whisper.loadModel(whisperConfig.model);
+      loadModel(whisperConfig.model);
     }
-  }, [isRunning, whisperConfig.model, whisper]);
+  }, [isRunning, whisperConfig.model, loadModel]);
 
   useEffect(() => {
-    if (!isRunning || !whisper.isReady) return;
+    if (!isRunning || !whisperReady) return;
 
     const interval = setInterval(() => {
-      const audio = noiseAudio.getBufferedAudio(
+      const audio = getBufferedAudio(
         whisperConfig.chunkDuration,
         16000
       );
       if (audio.length > 0) {
-        whisper.transcribe(audio, whisperConfig.temperature);
+        transcribe(audio, whisperConfig.temperature);
       }
     }, whisperConfig.chunkDuration * 1000);
 
     return () => clearInterval(interval);
-  }, [isRunning, whisper, whisperConfig, noiseAudio]);
+  }, [isRunning, whisperReady, whisperConfig.chunkDuration, whisperConfig.temperature, getBufferedAudio, transcribe]);
 
-  // Task 17: Capture recording data
   useEffect(() => {
     if (isRecording) {
       recordingRef.current = {
@@ -111,10 +113,10 @@ export default function Home() {
   }, [isRecording]);
 
   useEffect(() => {
-    if (isRecording && whisper.entries.length > 0) {
-      recordingRef.current.entries = [...whisper.entries];
+    if (isRecording && whisperEntries.length > 0) {
+      recordingRef.current.entries = [...whisperEntries];
     }
-  }, [isRecording, whisper.entries]);
+  }, [isRecording, whisperEntries]);
 
   useEffect(() => {
     if (isRecording) {
@@ -141,7 +143,7 @@ export default function Home() {
   const startSession = useCallback(async () => {
     await webcam.start();
     setIsRunning(true);
-  }, [webcam]);
+  }, [webcam.start]);
 
   const handleIntroStart = useCallback(async () => {
     localStorage.setItem("pareidolator-visited", "true");
@@ -183,21 +185,23 @@ export default function Home() {
       URL.revokeObjectURL(url);
     }
     setIsRecording((r) => !r);
-  }, [isRecording, whisper.entries, coherenceScore]);
+  }, [isRecording]);
+
+  const { getFrame, isActive: webcamActive } = webcam;
 
   useEffect(() => {
-    if (!isRunning || !webcam.isActive) return;
+    if (!isRunning || !webcamActive) return;
 
     let running = true;
     const loop = () => {
       if (!running) return;
-      const frame = webcam.getFrame();
+      const frame = getFrame();
       if (frame) {
         const bits = extractLSBNoise(frame, 1);
         const grid = noiseToPixelGrid(bits, WEBCAM_W, WEBCAM_H);
         setNoiseGrid(grid);
         const samples = noiseToAudioSamples(bits);
-        noiseAudio.feedSamples(samples);
+        feedSamples(samples);
         if (targetMask.mask) {
           const result = correlateNoiseMask(
             grid,
@@ -219,7 +223,7 @@ export default function Home() {
       running = false;
       cancelAnimationFrame(animFrameRef.current);
     };
-  }, [isRunning, webcam, targetMask]);
+  }, [isRunning, webcamActive, getFrame, feedSamples, targetMask]);
 
   return (
     <div style={styles.cockpit}>
@@ -240,13 +244,20 @@ export default function Home() {
       />
       <div style={styles.main} className="cockpit-main">
         <div style={styles.transcript} className="cockpit-transcript">
-          <TranscriptLog entries={whisper.entries} />
+          <TranscriptLog entries={whisperEntries} />
         </div>
         <div style={styles.hero} className="cockpit-hero">
           {!isRunning ? (
-            <button onClick={startSession} style={styles.startBtn}>
-              INITIALIZE
-            </button>
+            <div style={{ textAlign: "center" }}>
+              <button onClick={startSession} style={styles.startBtn}>
+                INITIALIZE
+              </button>
+              {webcam.error && (
+                <p style={{ color: "var(--amber)", marginTop: 12, fontSize: "0.9rem" }}>
+                  WEBCAM ERROR: {webcam.error}
+                </p>
+              )}
+            </div>
           ) : (
             <NoiseField
               noiseGrid={noiseGrid}

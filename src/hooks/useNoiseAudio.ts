@@ -1,4 +1,6 @@
-import { useRef, useCallback, useEffect } from "react";
+import { useRef, useCallback, useMemo } from "react";
+
+const MAX_BUFFER_SAMPLES = 16000 * 12;
 
 interface UseNoiseAudioReturn {
   feedSamples: (samples: Float32Array) => void;
@@ -12,23 +14,26 @@ export function useNoiseAudio(): UseNoiseAudioReturn {
   const bufferQueue = useRef<Float32Array[]>([]);
   const totalSamples = useRef(0);
 
-  useEffect(() => {
+  const ensureContext = useCallback(() => {
+    if (ctxRef.current) return;
     const ctx = new AudioContext({ sampleRate: 16000 });
     const gain = ctx.createGain();
     gain.gain.value = 0;
     gain.connect(ctx.destination);
     ctxRef.current = ctx;
     gainRef.current = gain;
-
-    return () => {
-      ctx.close();
-    };
   }, []);
 
   const feedSamples = useCallback((samples: Float32Array) => {
     bufferQueue.current.push(samples);
     totalSamples.current += samples.length;
 
+    while (totalSamples.current > MAX_BUFFER_SAMPLES && bufferQueue.current.length > 1) {
+      const dropped = bufferQueue.current.shift()!;
+      totalSamples.current -= dropped.length;
+    }
+
+    ensureContext();
     const ctx = ctxRef.current;
     const gain = gainRef.current;
     if (!ctx || !gain) return;
@@ -40,8 +45,9 @@ export function useNoiseAudio(): UseNoiseAudioReturn {
     const source = ctx.createBufferSource();
     source.buffer = buffer;
     source.connect(gain);
+    source.onended = () => source.disconnect();
     source.start();
-  }, []);
+  }, [ensureContext]);
 
   const getBufferedAudio = useCallback(
     (durationSec: number, sampleRate: number): Float32Array => {
@@ -55,6 +61,11 @@ export function useNoiseAudio(): UseNoiseAudioReturn {
         collected += chunk.length;
       }
 
+      totalSamples.current = 0;
+      for (const remaining of bufferQueue.current) {
+        totalSamples.current += remaining.length;
+      }
+
       const result = new Float32Array(Math.min(collected, needed));
       let offset = 0;
       for (const chunk of chunks) {
@@ -63,6 +74,7 @@ export function useNoiseAudio(): UseNoiseAudioReturn {
         offset += toCopy;
         if (toCopy < chunk.length) {
           bufferQueue.current.unshift(chunk.subarray(toCopy));
+          totalSamples.current += chunk.length - toCopy;
         }
       }
 
@@ -77,5 +89,8 @@ export function useNoiseAudio(): UseNoiseAudioReturn {
     }
   }, []);
 
-  return { feedSamples, getBufferedAudio, setVolume };
+  return useMemo(
+    () => ({ feedSamples, getBufferedAudio, setVolume }),
+    [feedSamples, getBufferedAudio, setVolume]
+  );
 }

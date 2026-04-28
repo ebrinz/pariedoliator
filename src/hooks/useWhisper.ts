@@ -1,8 +1,6 @@
-import { useRef, useCallback, useState, useEffect } from "react";
+import { useRef, useCallback, useState, useEffect, useMemo } from "react";
 import { scorePhraseCoherence } from "@/lib/transcript-scorer";
-import type { TranscriptEntry, TranscriptToken, WhisperConfig } from "@/types";
-
-let entryCounter = 0;
+import type { TranscriptEntry, TranscriptToken } from "@/types";
 
 interface UseWhisperReturn {
   isReady: boolean;
@@ -14,6 +12,7 @@ interface UseWhisperReturn {
 
 export function useWhisper(): UseWhisperReturn {
   const workerRef = useRef<Worker | null>(null);
+  const entryCounterRef = useRef(0);
   const [isReady, setIsReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [entries, setEntries] = useState<TranscriptEntry[]>([]);
@@ -37,17 +36,30 @@ export function useWhisper(): UseWhisperReturn {
         const text: string = e.data.text?.trim();
         if (!text) return;
 
-        const words = text.split(/\s+/);
-        const tokens: TranscriptToken[] = words.map((word) => ({
-          text: word + " ",
-          logProb: -2 + Math.random() * 4,
-          timestamp: Date.now(),
-        }));
+        const workerTokens: { text: string; logProb: number | null }[] =
+          e.data.tokens || [];
 
+        let tokens: TranscriptToken[];
+        if (workerTokens.length > 0) {
+          tokens = workerTokens.map((t) => ({
+            text: t.text.trim() + " ",
+            logProb: t.logProb ?? -3,
+            timestamp: Date.now(),
+          }));
+        } else {
+          const words = text.split(/\s+/);
+          tokens = words.map((word) => ({
+            text: word + " ",
+            logProb: -3,
+            timestamp: Date.now(),
+          }));
+        }
+
+        const words = tokens.map((t) => t.text.trim()).filter(Boolean);
         const phraseScore = scorePhraseCoherence(words);
 
         const entry: TranscriptEntry = {
-          id: `entry-${++entryCounter}`,
+          id: `entry-${++entryCounterRef.current}`,
           tokens,
           phraseScore,
           timestamp: Date.now(),
@@ -77,5 +89,8 @@ export function useWhisper(): UseWhisperReturn {
     []
   );
 
-  return { isReady, isLoading, loadModel, transcribe, entries };
+  return useMemo(
+    () => ({ isReady, isLoading, loadModel, transcribe, entries }),
+    [isReady, isLoading, loadModel, transcribe, entries]
+  );
 }

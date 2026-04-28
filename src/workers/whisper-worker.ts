@@ -42,16 +42,22 @@ self.onmessage = async (e: MessageEvent) => {
     try {
       const { audio, temperature } = e.data;
       const result = await transcriber(audio, {
-        return_timestamps: false,
+        return_timestamps: "word",
         temperature,
         no_speech_threshold: 0.3,
         compression_ratio_threshold: 2.4,
       });
 
+      const chunks = result.chunks || [];
+      const tokens = chunks.map((c: any) => ({
+        text: c.text ?? "",
+        logProb: typeof c.logprob === "number" ? c.logprob : null,
+      }));
+
       self.postMessage({
         type: "result",
         text: result.text,
-        chunks: result.chunks || [],
+        tokens,
       });
     } catch (err: any) {
       self.postMessage({ type: "error", error: err.message });

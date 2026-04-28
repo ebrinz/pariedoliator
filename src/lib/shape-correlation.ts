@@ -15,6 +15,7 @@ export function correlateNoiseMask(
 
   let matchCount = 0;
   let maskPixelCount = 0;
+  const threshold = 0.5;
 
   for (let y = 0; y < noiseH; y++) {
     for (let x = 0; x < noiseW; x++) {
@@ -25,7 +26,6 @@ export function correlateNoiseMask(
       if (maskVal > 0) {
         maskPixelCount++;
         const noiseVal = noise[y * noiseW + x];
-        const threshold = 0.5;
 
         if (noiseVal >= threshold) {
           matchCount++;
@@ -38,8 +38,16 @@ export function correlateNoiseMask(
     }
   }
 
-  const score =
-    maskPixelCount > 0 ? (matchCount / maskPixelCount) * 100 : 0;
+  if (maskPixelCount === 0) return { score: 0, tintMap };
+
+  // z-score: how far above the expected 50% random baseline
+  const observed = matchCount / maskPixelCount;
+  const expected = 0.5;
+  const stddev = Math.sqrt((expected * (1 - expected)) / maskPixelCount);
+  const z = stddev > 0 ? (observed - expected) / stddev : 0;
+
+  // Map z-score to 0-100: z=0 → 50%, z>=3 → 100%, z<=-3 → 0%
+  const score = Math.max(0, Math.min(100, (z / 3) * 50 + 50));
 
   return { score, tintMap };
 }

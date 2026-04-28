@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useState } from "react";
+import { useRef, useCallback, useEffect, useState, useMemo } from "react";
 
 interface UseWebcamOptions {
   width?: number;
@@ -18,6 +18,7 @@ export function useWebcam(options: UseWebcamOptions = {}): UseWebcamReturn {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const isActiveRef = useRef(false);
   const [isActive, setIsActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,12 +51,14 @@ export function useWebcam(options: UseWebcamOptions = {}): UseWebcamReturn {
       const video = videoRef.current!;
       video.srcObject = stream;
       await video.play();
+      isActiveRef.current = true;
       setIsActive(true);
       setError(null);
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Failed to access webcam"
       );
+      isActiveRef.current = false;
       setIsActive(false);
     }
   }, [width, height]);
@@ -65,18 +68,22 @@ export function useWebcam(options: UseWebcamOptions = {}): UseWebcamReturn {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
+    isActiveRef.current = false;
     setIsActive(false);
   }, []);
 
   const getFrame = useCallback((): ImageData | null => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (!video || !canvas || !isActive) return null;
+    if (!video || !canvas || !isActiveRef.current) return null;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return null;
     ctx.drawImage(video, 0, 0, width, height);
     return ctx.getImageData(0, 0, width, height);
-  }, [width, height, isActive]);
+  }, [width, height]);
 
-  return { start, stop, getFrame, isActive, error };
+  return useMemo(
+    () => ({ start, stop, getFrame, isActive, error }),
+    [start, stop, getFrame, isActive, error]
+  );
 }
