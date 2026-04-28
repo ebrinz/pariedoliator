@@ -7,9 +7,11 @@ import TranscriptLog from "@/components/TranscriptLog";
 import ZenerStation from "@/components/ZenerStation";
 import BottomBar from "@/components/BottomBar";
 import { useWebcam } from "@/hooks/useWebcam";
+import { useNoiseAudio } from "@/hooks/useNoiseAudio";
 import {
   extractLSBNoise,
   noiseToPixelGrid,
+  noiseToAudioSamples,
 } from "@/lib/noise-extraction";
 import type { TranscriptEntry, WhisperConfig } from "@/types";
 
@@ -35,7 +37,12 @@ export default function Home() {
   const [isRunning, setIsRunning] = useState(false);
 
   const webcam = useWebcam({ width: WEBCAM_W, height: WEBCAM_H });
+  const noiseAudio = useNoiseAudio();
   const animFrameRef = useRef<number>(0);
+
+  useEffect(() => {
+    noiseAudio.setVolume(noiseVolume);
+  }, [noiseVolume, noiseAudio]);
 
   const startSession = useCallback(async () => {
     await webcam.start();
@@ -53,6 +60,8 @@ export default function Home() {
         const bits = extractLSBNoise(frame, 1);
         const grid = noiseToPixelGrid(bits, WEBCAM_W, WEBCAM_H);
         setNoiseGrid(grid);
+        const samples = noiseToAudioSamples(bits);
+        noiseAudio.feedSamples(samples);
       }
       animFrameRef.current = requestAnimationFrame(loop);
     };
