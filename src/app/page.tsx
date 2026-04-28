@@ -9,6 +9,7 @@ import BottomBar from "@/components/BottomBar";
 import { useWebcam } from "@/hooks/useWebcam";
 import { useNoiseAudio } from "@/hooks/useNoiseAudio";
 import { useWhisper } from "@/hooks/useWhisper";
+import { useTTS } from "@/hooks/useTTS";
 import {
   extractLSBNoise,
   noiseToPixelGrid,
@@ -37,11 +38,26 @@ export default function Home() {
   const webcam = useWebcam({ width: WEBCAM_W, height: WEBCAM_H });
   const noiseAudio = useNoiseAudio();
   const whisper = useWhisper();
+  const tts = useTTS();
   const animFrameRef = useRef<number>(0);
+  const prevEntryCountRef = useRef(0);
 
   useEffect(() => {
     noiseAudio.setVolume(noiseVolume);
   }, [noiseVolume, noiseAudio]);
+
+  useEffect(() => {
+    tts.setVolume(ttsVolume);
+  }, [ttsVolume, tts]);
+
+  useEffect(() => {
+    if (whisper.entries.length > prevEntryCountRef.current) {
+      const latest = whisper.entries[whisper.entries.length - 1];
+      const text = latest.tokens.map((t) => t.text).join("");
+      tts.speak(text);
+      prevEntryCountRef.current = whisper.entries.length;
+    }
+  }, [whisper.entries, tts]);
 
   useEffect(() => {
     if (isRunning) {
