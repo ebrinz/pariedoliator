@@ -15,6 +15,7 @@ import {
   noiseToPixelGrid,
   noiseToAudioSamples,
 } from "@/lib/noise-extraction";
+import { correlateNoiseMask } from "@/lib/shape-correlation";
 import type { WhisperConfig } from "@/types";
 
 const WEBCAM_W = 320;
@@ -81,6 +82,19 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [isRunning, whisper, whisperConfig, noiseAudio]);
 
+  const [targetMask, setTargetMask] = useState<{
+    mask: Uint8Array | null;
+    width: number;
+    height: number;
+  }>({ mask: null, width: 0, height: 0 });
+
+  const handleMaskChange = useCallback(
+    (mask: Uint8Array | null, width: number, height: number) => {
+      setTargetMask({ mask, width, height });
+    },
+    []
+  );
+
   const startSession = useCallback(async () => {
     await webcam.start();
     setIsRunning(true);
@@ -99,6 +113,18 @@ export default function Home() {
         setNoiseGrid(grid);
         const samples = noiseToAudioSamples(bits);
         noiseAudio.feedSamples(samples);
+        if (targetMask.mask) {
+          const result = correlateNoiseMask(
+            grid,
+            targetMask.mask,
+            WEBCAM_W,
+            WEBCAM_H,
+            targetMask.width,
+            targetMask.height
+          );
+          setCoherenceScore(result.score);
+          setTintMap(result.tintMap);
+        }
       }
       animFrameRef.current = requestAnimationFrame(loop);
     };
@@ -108,11 +134,7 @@ export default function Home() {
       running = false;
       cancelAnimationFrame(animFrameRef.current);
     };
-  }, [isRunning, webcam]);
-
-  const handleMaskChange = useCallback((mask: ImageData | null) => {
-    // Will be connected to coherence scoring in Task 13
-  }, []);
+  }, [isRunning, webcam, targetMask]);
 
   return (
     <div style={styles.cockpit}>
