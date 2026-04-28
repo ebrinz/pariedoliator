@@ -8,12 +8,13 @@ import ZenerStation from "@/components/ZenerStation";
 import BottomBar from "@/components/BottomBar";
 import { useWebcam } from "@/hooks/useWebcam";
 import { useNoiseAudio } from "@/hooks/useNoiseAudio";
+import { useWhisper } from "@/hooks/useWhisper";
 import {
   extractLSBNoise,
   noiseToPixelGrid,
   noiseToAudioSamples,
 } from "@/lib/noise-extraction";
-import type { TranscriptEntry, WhisperConfig } from "@/types";
+import type { WhisperConfig } from "@/types";
 
 const WEBCAM_W = 320;
 const WEBCAM_H = 240;
@@ -26,9 +27,6 @@ export default function Home() {
   });
   const [noiseVolume, setNoiseVolume] = useState(0);
   const [ttsVolume, setTtsVolume] = useState(0);
-  const [transcriptEntries, setTranscriptEntries] = useState<
-    TranscriptEntry[]
-  >([]);
   const [coherenceScore, setCoherenceScore] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [showIntro, setShowIntro] = useState(false);
@@ -38,11 +36,34 @@ export default function Home() {
 
   const webcam = useWebcam({ width: WEBCAM_W, height: WEBCAM_H });
   const noiseAudio = useNoiseAudio();
+  const whisper = useWhisper();
   const animFrameRef = useRef<number>(0);
 
   useEffect(() => {
     noiseAudio.setVolume(noiseVolume);
   }, [noiseVolume, noiseAudio]);
+
+  useEffect(() => {
+    if (isRunning) {
+      whisper.loadModel(whisperConfig.model);
+    }
+  }, [isRunning, whisperConfig.model, whisper]);
+
+  useEffect(() => {
+    if (!isRunning || !whisper.isReady) return;
+
+    const interval = setInterval(() => {
+      const audio = noiseAudio.getBufferedAudio(
+        whisperConfig.chunkDuration,
+        16000
+      );
+      if (audio.length > 0) {
+        whisper.transcribe(audio, whisperConfig.temperature);
+      }
+    }, whisperConfig.chunkDuration * 1000);
+
+    return () => clearInterval(interval);
+  }, [isRunning, whisper, whisperConfig, noiseAudio]);
 
   const startSession = useCallback(async () => {
     await webcam.start();
@@ -96,7 +117,7 @@ export default function Home() {
       />
       <div style={styles.main}>
         <div style={styles.transcript}>
-          <TranscriptLog entries={transcriptEntries} />
+          <TranscriptLog entries={whisper.entries} />
         </div>
         <div style={styles.hero}>
           {!isRunning ? (
