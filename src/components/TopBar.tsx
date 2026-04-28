@@ -4,6 +4,8 @@ interface TopBarProps {
   model: "tiny" | "small";
   chunkDuration: number;
   temperature: number;
+  modelLoading: boolean;
+  modelReady: boolean;
   onModelChange: (model: "tiny" | "small") => void;
   onChunkChange: (value: number) => void;
   onTempChange: (value: number) => void;
@@ -22,6 +24,8 @@ export default function TopBar({
   model,
   chunkDuration,
   temperature,
+  modelLoading,
+  modelReady,
   onModelChange,
   onChunkChange,
   onTempChange,
@@ -31,10 +35,20 @@ export default function TopBar({
     <div className="panel" style={styles.bar}>
       <div style={styles.controls}>
         <label style={styles.control}>
-          <span className="hud-label">MODEL</span>
+          <span className="hud-label">
+            MODEL{" "}
+            {modelLoading ? (
+              <span className="phosphor-pulse" style={{ color: "var(--amber)", fontSize: "0.75rem" }}>
+                LOADING...
+              </span>
+            ) : modelReady ? (
+              <span style={{ color: "var(--phosphor-green)", fontSize: "0.75rem" }}>●</span>
+            ) : null}
+          </span>
           <select
             value={model}
             onChange={(e) => onModelChange(e.target.value as "tiny" | "small")}
+            disabled={modelLoading}
           >
             <option value="tiny">TINY</option>
             <option value="small">SMALL</option>

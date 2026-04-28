@@ -1,9 +1,19 @@
-import { pipeline, env } from "@xenova/transformers";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-env.allowLocalModels = false;
-
+let pipeline: any = null;
 let transcriber: any = null;
 let currentModel: string | null = null;
+
+async function ensurePipeline() {
+  if (pipeline) return;
+  const module = await import(
+    /* webpackIgnore: true */
+    // @ts-ignore — bypass bundler, load from CDN at runtime
+    "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2"
+  );
+  module.env.allowLocalModels = false;
+  pipeline = module.pipeline;
+}
 
 async function loadModel(model: "tiny" | "small") {
   const modelId =
@@ -14,9 +24,10 @@ async function loadModel(model: "tiny" | "small") {
   if (currentModel === modelId && transcriber) return;
 
   self.postMessage({ type: "loading", model: modelId });
+  await ensurePipeline();
   transcriber = await pipeline("automatic-speech-recognition", modelId, {
     dtype: "fp32",
-  } as any);
+  });
   currentModel = modelId;
   self.postMessage({ type: "ready", model: modelId });
 }
@@ -42,7 +53,7 @@ self.onmessage = async (e: MessageEvent) => {
     try {
       const { audio, temperature } = e.data;
       const result = await transcriber(audio, {
-        return_timestamps: "word",
+        return_timestamps: true,
         temperature,
         no_speech_threshold: 0.3,
         compression_ratio_threshold: 2.4,

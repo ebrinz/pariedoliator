@@ -5,9 +5,11 @@ import type { TranscriptEntry } from "@/types";
 
 interface TranscriptLogProps {
   entries: TranscriptEntry[];
+  modelLoading?: boolean;
+  modelReady?: boolean;
 }
 
-export default function TranscriptLog({ entries }: TranscriptLogProps) {
+export default function TranscriptLog({ entries, modelLoading, modelReady }: TranscriptLogProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -23,7 +25,13 @@ export default function TranscriptLog({ entries }: TranscriptLogProps) {
       </div>
       {entries.length === 0 && (
         <div style={{ color: "var(--text-dim)", fontSize: "0.875rem" }}>
-          Listening for phantom voices...
+          {modelLoading ? (
+            <span className="phosphor-pulse">Downloading Whisper model...</span>
+          ) : modelReady ? (
+            "Listening for phantom voices..."
+          ) : (
+            "Awaiting initialization..."
+          )}
         </div>
       )}
       {entries.map((entry) => (

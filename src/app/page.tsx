@@ -61,7 +61,7 @@ export default function Home() {
 
   const { setVolume: setNoiseAudioVolume, feedSamples, getBufferedAudio } = noiseAudio;
   const { setVolume: setTtsVolume2, speak, stop: stopTts } = tts;
-  const { isReady: whisperReady, loadModel, transcribe, entries: whisperEntries } = whisper;
+  const { isReady: whisperReady, isLoading: whisperLoading, loadModel, transcribe, entries: whisperEntries } = whisper;
 
   useEffect(() => {
     setNoiseAudioVolume(noiseVolume);
@@ -231,6 +231,8 @@ export default function Home() {
         model={whisperConfig.model}
         chunkDuration={whisperConfig.chunkDuration}
         temperature={whisperConfig.temperature}
+        modelLoading={whisperLoading}
+        modelReady={whisperReady}
         onModelChange={(model) =>
           setWhisperConfig((c) => ({ ...c, model }))
         }
@@ -244,7 +246,7 @@ export default function Home() {
       />
       <div style={styles.main} className="cockpit-main">
         <div style={styles.transcript} className="cockpit-transcript">
-          <TranscriptLog entries={whisperEntries} />
+          <TranscriptLog entries={whisperEntries} modelLoading={whisperLoading} modelReady={whisperReady} />
         </div>
         <div style={styles.hero} className="cockpit-hero">
           {!isRunning ? (
