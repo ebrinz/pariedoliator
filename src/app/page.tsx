@@ -1,12 +1,20 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import TopBar from "@/components/TopBar";
 import NoiseField from "@/components/NoiseField";
 import TranscriptLog from "@/components/TranscriptLog";
 import ZenerStation from "@/components/ZenerStation";
 import BottomBar from "@/components/BottomBar";
+import { useWebcam } from "@/hooks/useWebcam";
+import {
+  extractLSBNoise,
+  noiseToPixelGrid,
+} from "@/lib/noise-extraction";
 import type { TranscriptEntry, WhisperConfig } from "@/types";
+
+const WEBCAM_W = 320;
+const WEBCAM_H = 240;
 
 export default function Home() {
   const [whisperConfig, setWhisperConfig] = useState<WhisperConfig>({
@@ -16,12 +24,45 @@ export default function Home() {
   });
   const [noiseVolume, setNoiseVolume] = useState(0);
   const [ttsVolume, setTtsVolume] = useState(0);
-  const [transcriptEntries, setTranscriptEntries] = useState<TranscriptEntry[]>(
-    []
-  );
+  const [transcriptEntries, setTranscriptEntries] = useState<
+    TranscriptEntry[]
+  >([]);
   const [coherenceScore, setCoherenceScore] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [showIntro, setShowIntro] = useState(false);
+  const [noiseGrid, setNoiseGrid] = useState<Float32Array | null>(null);
+  const [tintMap, setTintMap] = useState<Uint8Array | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
+
+  const webcam = useWebcam({ width: WEBCAM_W, height: WEBCAM_H });
+  const animFrameRef = useRef<number>(0);
+
+  const startSession = useCallback(async () => {
+    await webcam.start();
+    setIsRunning(true);
+  }, [webcam]);
+
+  useEffect(() => {
+    if (!isRunning || !webcam.isActive) return;
+
+    let running = true;
+    const loop = () => {
+      if (!running) return;
+      const frame = webcam.getFrame();
+      if (frame) {
+        const bits = extractLSBNoise(frame, 1);
+        const grid = noiseToPixelGrid(bits, WEBCAM_W, WEBCAM_H);
+        setNoiseGrid(grid);
+      }
+      animFrameRef.current = requestAnimationFrame(loop);
+    };
+    loop();
+
+    return () => {
+      running = false;
+      cancelAnimationFrame(animFrameRef.current);
+    };
+  }, [isRunning, webcam]);
 
   const handleMaskChange = useCallback((mask: ImageData | null) => {
     // Will be connected to coherence scoring in Task 13
@@ -49,7 +90,18 @@ export default function Home() {
           <TranscriptLog entries={transcriptEntries} />
         </div>
         <div style={styles.hero}>
-          <NoiseField width={640} height={480} />
+          {!isRunning ? (
+            <button onClick={startSession} style={styles.startBtn}>
+              INITIALIZE
+            </button>
+          ) : (
+            <NoiseField
+              noiseGrid={noiseGrid}
+              gridWidth={WEBCAM_W}
+              gridHeight={WEBCAM_H}
+              tintMap={tintMap}
+            />
+          )}
         </div>
         <div style={styles.zener}>
           <ZenerStation
@@ -97,5 +149,16 @@ const styles: Record<string, React.CSSProperties> = {
   zener: {
     width: 200,
     flexShrink: 0,
+  },
+  startBtn: {
+    fontFamily: "var(--font-main)",
+    fontSize: "1.5rem",
+    color: "var(--phosphor-green)",
+    background: "transparent",
+    border: "2px solid var(--phosphor-green)",
+    padding: "16px 32px",
+    cursor: "pointer",
+    textShadow: "0 0 8px var(--phosphor-green)",
+    boxShadow: "0 0 16px rgba(51,255,51,0.3)",
   },
 };
