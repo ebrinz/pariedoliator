@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import IntroModal from "@/components/IntroModal";
 import TopBar from "@/components/TopBar";
 import NoiseField from "@/components/NoiseField";
 import TranscriptLog from "@/components/TranscriptLog";
@@ -31,7 +32,16 @@ export default function Home() {
   const [ttsVolume, setTtsVolume] = useState(0);
   const [coherenceScore, setCoherenceScore] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
-  const [showIntro, setShowIntro] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
+  const [hasVisited, setHasVisited] = useState(false);
+
+  useEffect(() => {
+    const visited = localStorage.getItem("pareidolator-visited");
+    if (visited) {
+      setShowIntro(false);
+      setHasVisited(true);
+    }
+  }, []);
   const [noiseGrid, setNoiseGrid] = useState<Float32Array | null>(null);
   const [tintMap, setTintMap] = useState<Uint8Array | null>(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -99,6 +109,17 @@ export default function Home() {
     await webcam.start();
     setIsRunning(true);
   }, [webcam]);
+
+  const handleIntroStart = useCallback(async () => {
+    localStorage.setItem("pareidolator-visited", "true");
+    setShowIntro(false);
+    setHasVisited(true);
+    await startSession();
+  }, [startSession]);
+
+  const handleIntroClose = useCallback(() => {
+    setShowIntro(false);
+  }, []);
 
   useEffect(() => {
     if (!isRunning || !webcam.isActive) return;
@@ -186,6 +207,13 @@ export default function Home() {
         onRecordClick={() => setIsRecording((r) => !r)}
         isRecording={isRecording}
       />
+      {showIntro && (
+        <IntroModal
+          onStart={handleIntroStart}
+          onClose={handleIntroClose}
+          isFirstVisit={!hasVisited}
+        />
+      )}
     </div>
   );
 }
