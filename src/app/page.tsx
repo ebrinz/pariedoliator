@@ -17,7 +17,7 @@ import {
   noiseToAudioSamples,
 } from "@/lib/noise-extraction";
 import { correlateNoiseMask } from "@/lib/shape-correlation";
-import type { WhisperConfig } from "@/types";
+import type { TranscriptEntry, WhisperConfig } from "@/types";
 
 const WEBCAM_W = 320;
 const WEBCAM_H = 240;
@@ -52,6 +52,13 @@ export default function Home() {
   const tts = useTTS();
   const animFrameRef = useRef<number>(0);
   const prevEntryCountRef = useRef(0);
+
+  // Task 17: Recording ref
+  const recordingRef = useRef<{
+    entries: TranscriptEntry[];
+    coherenceLog: { time: number; score: number }[];
+    startTime: number;
+  }>({ entries: [], coherenceLog: [], startTime: 0 });
 
   useEffect(() => {
     noiseAudio.setVolume(noiseVolume);
@@ -92,6 +99,32 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [isRunning, whisper, whisperConfig, noiseAudio]);
 
+  // Task 17: Capture recording data
+  useEffect(() => {
+    if (isRecording) {
+      recordingRef.current = {
+        entries: [],
+        coherenceLog: [],
+        startTime: Date.now(),
+      };
+    }
+  }, [isRecording]);
+
+  useEffect(() => {
+    if (isRecording && whisper.entries.length > 0) {
+      recordingRef.current.entries = [...whisper.entries];
+    }
+  }, [isRecording, whisper.entries]);
+
+  useEffect(() => {
+    if (isRecording) {
+      recordingRef.current.coherenceLog.push({
+        time: Date.now(),
+        score: coherenceScore,
+      });
+    }
+  }, [isRecording, coherenceScore]);
+
   const [targetMask, setTargetMask] = useState<{
     mask: Uint8Array | null;
     width: number;
@@ -120,6 +153,37 @@ export default function Home() {
   const handleIntroClose = useCallback(() => {
     setShowIntro(false);
   }, []);
+
+  // Task 17: Export session on stop
+  const handleRecordClick = useCallback(() => {
+    if (isRecording) {
+      const data = recordingRef.current;
+      const exportObj = {
+        session: {
+          start: new Date(data.startTime).toISOString(),
+          end: new Date().toISOString(),
+          duration: Date.now() - data.startTime,
+        },
+        transcript: data.entries.map((e) => ({
+          time: new Date(e.timestamp).toISOString(),
+          text: e.tokens.map((t) => t.text).join(""),
+          phraseScore: e.phraseScore,
+        })),
+        coherence: data.coherenceLog,
+      };
+
+      const blob = new Blob([JSON.stringify(exportObj, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `pareidolator-session-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    setIsRecording((r) => !r);
+  }, [isRecording, whisper.entries, coherenceScore]);
 
   useEffect(() => {
     if (!isRunning || !webcam.isActive) return;
@@ -174,11 +238,11 @@ export default function Home() {
         }
         onInfoClick={() => setShowIntro(true)}
       />
-      <div style={styles.main}>
-        <div style={styles.transcript}>
+      <div style={styles.main} className="cockpit-main">
+        <div style={styles.transcript} className="cockpit-transcript">
           <TranscriptLog entries={whisper.entries} />
         </div>
-        <div style={styles.hero}>
+        <div style={styles.hero} className="cockpit-hero">
           {!isRunning ? (
             <button onClick={startSession} style={styles.startBtn}>
               INITIALIZE
@@ -192,7 +256,7 @@ export default function Home() {
             />
           )}
         </div>
-        <div style={styles.zener}>
+        <div style={styles.zener} className="cockpit-zener">
           <ZenerStation
             coherenceScore={coherenceScore}
             onMaskChange={handleMaskChange}
@@ -204,7 +268,7 @@ export default function Home() {
         ttsVolume={ttsVolume}
         onNoiseVolumeChange={setNoiseVolume}
         onTtsVolumeChange={setTtsVolume}
-        onRecordClick={() => setIsRecording((r) => !r)}
+        onRecordClick={handleRecordClick}
         isRecording={isRecording}
       />
       {showIntro && (
