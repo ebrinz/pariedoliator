@@ -228,6 +228,72 @@ All layers driven by `uniform float uTime` for animation. Single-pass, Safari We
 - UI elements feel like SCUMM engine verb bars — chunky, tactile, clearly clickable
 - Dithered gradients where possible instead of smooth CSS gradients
 
+## Intro Modal
+
+A modal overlay shown on first visit (and accessible anytime via an info button in the top bar).
+
+### Content
+- **Title:** "PAREIDOLATOR" in glowing green
+- **Tagline:** Brief atmospheric description — what this machine does and why
+- **Permissions:** Explains that the app needs webcam access, why (sensor noise as randomness source), and that no data leaves the browser
+- **How to use:** Short bullet list — what the noise field is, what the transcript shows, how to draw/select Zener shapes, what the controls do
+- **Start button:** "INITIALIZE" — dismisses the modal and triggers the webcam permission request
+- **Aesthetic:** Same VHS/CRT treatment as the main UI — scanline overlay, VT323 font, dark background with phosphor green text
+
+### Info Button
+- Small `[?]` or `[i]` icon in the top bar, next to the title
+- Re-opens the modal at any time
+- Does not interrupt the running session — modal overlays on top, dismiss to resume
+
+### First Visit Behavior
+- Modal shown automatically on first load
+- A `localStorage` flag tracks whether the user has dismissed it
+- Subsequent visits skip the modal and go straight to the cockpit (webcam permission still requested on start)
+
+## Responsive / Mobile Layout
+
+The cockpit adapts to mobile viewports (portrait and landscape).
+
+### Portrait (< 768px width)
+```
++---------------------------+
+| PAREIDOLATOR        [?]   |
++---------------------------+
+|                           |
+|       NOISE FIELD         |
+|       (hero canvas)       |
+|                           |
++---------------------------+
+| MODEL [tiny v] TEMP [--o] |
+| CHUNK [--o--]             |
++-------------+-------------+
+| TRANSCRIPT  | ZENER       |
+| LOG         | [draw box]  |
+| (scrolling) | O /\ [] * + |
+|             | [meter]     |
++-------------+-------------+
+| NOISE [---o-] TTS [---o-] |
++---------------------------+
+```
+
+- Hero noise field stays dominant, full-width
+- Controls collapse into a compact row below the hero
+- Transcript and Zener panels stack side-by-side below controls (50/50 split)
+- Bottom bar stays fixed at the bottom
+- Drawing canvas shrinks but remains usable (min 120x120px touch target)
+- All sliders switch to touch-friendly sizing (taller hit areas)
+
+### Landscape Mobile (< 768px height)
+- Similar to desktop layout but panels shrink proportionally
+- Transcript log reduces to fewer visible lines
+- Zener panel collapses to just the drawing canvas + presets (meter overlays on tap)
+
+### Touch Interactions
+- Drawing canvas supports touch/pointer events for freehand drawing
+- Sliders use native range inputs styled to match the VHS aesthetic
+- Tap Zener preset symbols to load them
+- All interactive elements meet minimum 44x44px touch target
+
 ## Deployment
 
 - Next.js with `output: 'export'` for static generation
