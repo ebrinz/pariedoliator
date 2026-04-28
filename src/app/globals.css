@@ -1,26 +1,193 @@
-@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=VT323&display=swap");
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --phosphor-green: #33ff33;
+  --phosphor-green-dim: #1a8c1a;
+  --amber: #ffaa00;
+  --cool-blue: #4488ff;
+  --bg-dark: #0a0a0a;
+  --bg-panel: #111111;
+  --border-color: #1a3a1a;
+  --text-dim: #444444;
+  --text-highlight: #fff5e0;
+  --font-main: "VT323", monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-dark);
+  color: var(--phosphor-green);
+  font-family: var(--font-main);
+  font-size: 16px;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+}
+
+/* CRT scanline overlay on the whole page */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.15) 2px,
+    rgba(0, 0, 0, 0.15) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Glowing title */
+@keyframes phosphor-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    text-shadow: 0 0 4px #33ff33, 0 0 12px #33ff33, 0 0 24px #1a8c1a,
+      1px 1px 0 #0a0a0a;
+    letter-spacing: 0.05em;
+  }
+  50% {
+    opacity: 0.7;
+    text-shadow: 0 0 2px #33ff33, 0 0 8px #33ff33, 0 0 16px #1a8c1a,
+      1px 1px 0 #0a0a0a;
+    letter-spacing: 0.06em;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.title-glow {
+  color: var(--phosphor-green);
+  font-size: 2rem;
+  animation: phosphor-pulse 3s ease-in-out infinite;
+  text-shadow: 0 0 4px #33ff33, 0 0 12px #33ff33, 0 0 24px #1a8c1a,
+    1px 1px 0 #0a0a0a;
+}
+
+/* LucasArts panel borders */
+.panel {
+  border: 2px solid var(--border-color);
+  border-top-color: #2a5a2a;
+  border-left-color: #2a5a2a;
+  border-bottom-color: #0a1a0a;
+  border-right-color: #0a1a0a;
+  background: var(--bg-panel);
+}
+
+/* HUD label style */
+.hud-label {
+  color: var(--phosphor-green-dim);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* VHS flicker on transcript tokens */
+@keyframes vhs-glitch {
+  0%,
+  95%,
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+  96% {
+    transform: translateX(-2px) skewX(-1deg);
+    opacity: 0.8;
+  }
+  97% {
+    transform: translateX(3px);
+    opacity: 0.9;
+  }
+  98% {
+    transform: translateX(-1px) skewX(0.5deg);
+    opacity: 0.7;
+  }
+}
+
+.vhs-glitch-burst {
+  animation: vhs-glitch 4s linear infinite;
+}
+
+/* Range slider VHS styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  height: 44px;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--border-color);
+  border: 1px solid var(--phosphor-green-dim);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 20px;
+  background: var(--phosphor-green);
+  border: 1px solid #000;
+  margin-top: -9px;
+  box-shadow: 0 0 4px var(--phosphor-green);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: var(--border-color);
+  border: 1px solid var(--phosphor-green-dim);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 20px;
+  background: var(--phosphor-green);
+  border: 1px solid #000;
+  box-shadow: 0 0 4px var(--phosphor-green);
+}
+
+/* Dropdown VHS styling */
+select {
+  font-family: var(--font-main);
+  font-size: 1rem;
+  background: var(--bg-dark);
+  color: var(--phosphor-green);
+  border: 1px solid var(--phosphor-green-dim);
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+select:focus {
+  outline: 1px solid var(--phosphor-green);
+  box-shadow: 0 0 4px var(--phosphor-green);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--phosphor-green-dim);
+}
+
+/* Mobile responsive */
+@media (max-width: 767px) {
+  .title-glow {
+    font-size: 1.5rem;
+  }
 }
