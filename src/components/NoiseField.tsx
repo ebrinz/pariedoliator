@@ -78,7 +78,7 @@ export default function NoiseField({
   }, [noiseGrid, gridWidth, gridHeight, tintMap]);
 
   return (
-    <div style={styles.container}>
+    <div className="noise-field-screen" style={styles.container}>
       <canvas ref={glCanvasRef} style={styles.canvas} />
     </div>
   );

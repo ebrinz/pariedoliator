@@ -42,7 +42,7 @@ export function correlateNoiseMask(
     }
   }
 
-  if (insideCount === 0 || outsideCount === 0) return { score: 0, tintMap };
+  if (insideCount === 0 || outsideCount === 0) return { score: 0, tintMap }; // 0 = no correlation
 
   const meanInside = insideSum / insideCount;
   const meanOutside = outsideSum / outsideCount;
@@ -72,9 +72,8 @@ export function correlateNoiseMask(
   varInside /= insideCount;
   varOutside /= outsideCount;
 
-  // Require meaningful effect size — tiny sensor bias with huge N shouldn't score high
   const minContrast = 0.03;
-  if (Math.abs(contrast) < minContrast) return { score: 50, tintMap };
+  if (Math.abs(contrast) < minContrast) return { score: 0, tintMap };
 
   const se = Math.sqrt(varInside / insideCount + varOutside / outsideCount);
   let z: number;
@@ -84,10 +83,9 @@ export function correlateNoiseMask(
     z = contrast > 0.001 ? 5 : contrast < -0.001 ? -5 : 0;
   }
 
-  // Scale by effect size so weak-but-significant effects don't max out
   const effectScale = Math.min(1, Math.abs(contrast) / 0.15);
-  const rawScore = (z / 4) * 50 + 50;
-  const score = Math.max(0, Math.min(100, 50 + (rawScore - 50) * effectScale));
+  const rawNorm = z / 4; // z=4 maps to ±1
+  const score = Math.max(-1, Math.min(1, rawNorm * effectScale));
 
   return { score, tintMap };
 }

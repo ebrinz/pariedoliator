@@ -18,7 +18,7 @@ export default function IntroModal({
           className="title-glow"
           style={{ textAlign: "center", marginBottom: 16 }}
         >
-          PAREIDOLATOR
+          Pareidolator
         </h1>
         <p style={styles.tagline}>
           A machine that listens to quantum noise and hears phantom voices.
@@ -37,6 +37,18 @@ export default function IntroModal({
         </div>
 
         <div style={styles.section}>
+          <h2 style={styles.heading}>THE NOISE</h2>
+          <p style={styles.text}>
+            Your camera sensor generates thermal noise in every pixel —
+            true quantum randomness at the hardware level. For the purest
+            signal, <strong>cover your webcam lens</strong> with tape or
+            your finger. In total darkness the sensor has nothing to
+            image, so every pixel is pure thermal fluctuation — no scene
+            data, no compression artifacts, just entropy.
+          </p>
+        </div>
+
+        <div style={styles.section}>
           <h2 style={styles.heading}>HOW TO USE</h2>
           <ul style={styles.list}>
             <li>The center display shows raw pixel noise from your sensor</li>
@@ -45,7 +57,7 @@ export default function IntroModal({
               the transcript appears on the left
             </li>
             <li>
-              Draw a symbol on the right panel (or pick a preset) and
+              Select a shape on the channel dial (or draw your own) and
               concentrate — watch the coherence meter
             </li>
             <li>
@@ -57,6 +69,19 @@ export default function IntroModal({
               phantom voices speak
             </li>
           </ul>
+        </div>
+
+        <div style={styles.section}>
+          <h2 style={styles.heading}>COHERENCE</h2>
+          <p style={styles.text}>
+            The meter on the right measures how well the random noise
+            aligns with your chosen shape. The score ranges from
+            {" "}<strong>-1</strong> (anti-correlated) through{" "}
+            <strong>0</strong> (pure chance) to{" "}
+            <strong>+1</strong> (perfect match). Under normal conditions
+            it should hover near zero. Anything else is between you and
+            the void.
+          </p>
         </div>
 
         <div style={{ textAlign: "center", marginTop: 24 }}>
@@ -123,12 +148,13 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: "1.5rem",
     color: "var(--screen-amber-glow)",
     background: "transparent",
-    border: "2px solid var(--screen-amber)",
+    border: "3px solid",
+    borderColor: "#d4cfc4 #807868 #706858 #ccc6b8",
     borderRadius: 4,
     padding: "12px 40px",
     cursor: "pointer",
     textShadow: "0 0 8px var(--screen-amber)",
-    boxShadow: "0 0 16px rgba(212,164,74,0.3)",
+    boxShadow: "1px 1px 0 #504840, -1px -1px 0 #e8e2d8, 2px 2px 6px rgba(0,0,0,0.4), 0 0 16px rgba(212,164,74,0.2)",
     letterSpacing: "0.1em",
   },
 };

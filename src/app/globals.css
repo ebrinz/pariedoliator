@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&family=Pinyon+Script&display=swap");
 
 :root {
   --screen-amber: #d4a44a;
@@ -40,20 +40,24 @@ body {
   font-size: 16px;
 }
 
-/* CRT screen glow + scanlines on the screen area only */
-body::after {
+/* Scanlines — only on the noise field screen */
+.noise-field-screen {
+  position: relative;
+}
+
+.noise-field-screen::after {
   content: "";
-  position: fixed;
+  position: absolute;
   inset: 0;
   background: repeating-linear-gradient(
     0deg,
     transparent,
     transparent 3px,
-    rgba(0, 0, 0, 0.08) 3px,
-    rgba(0, 0, 0, 0.08) 6px
+    rgba(0, 0, 0, 0.1) 3px,
+    rgba(0, 0, 0, 0.1) 6px
   );
   pointer-events: none;
-  z-index: 9999;
+  z-index: 1;
 }
 
 /* Warm amber title glow */
@@ -69,22 +73,46 @@ body::after {
 }
 
 .title-glow {
-  color: var(--screen-amber-glow);
-  font-family: var(--font-main);
-  font-size: 1.8rem;
-  letter-spacing: 0.12em;
-  animation: warm-pulse 4s ease-in-out infinite;
-  text-shadow: 0 0 6px var(--screen-amber), 0 0 16px var(--screen-amber-dim);
+  color: #1a1008;
+  font-family: "Pinyon Script", cursive;
+  font-size: 2.2rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  animation: none;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.25);
+  background: linear-gradient(
+    180deg,
+    #e8e4dc 0%,
+    #d8d2c8 15%,
+    #f0ece4 40%,
+    #c8c0b4 60%,
+    #b0a898 85%,
+    #d0ccc4 100%
+  );
+  padding: 4px 20px 6px;
+  border-radius: 3px;
+  border: 1px solid;
+  border-color: #e0dcd4 #908878 #807060 #c8c0b4;
+  box-shadow:
+    1px 1px 0 #605848,
+    -1px -1px 0 #f0ece4,
+    2px 2px 4px rgba(0,0,0,0.35),
+    inset 0 1px 1px rgba(255,255,255,0.4),
+    inset 0 -1px 1px rgba(0,0,0,0.1);
 }
 
 /* Wood-grain panel borders — beveled cabinet style */
 .panel {
-  border: 3px solid var(--wood-mid);
-  border-top-color: var(--wood-highlight);
-  border-left-color: var(--wood-highlight);
-  border-bottom-color: var(--wood-dark);
-  border-right-color: var(--wood-dark);
-  background: var(--bg-panel);
+  border: 4px solid;
+  border-color: #d4cfc4 #807868 #706858 #ccc6b8;
+  box-shadow:
+    1px 1px 0 #504840,
+    -1px -1px 0 #e8e2d8,
+    2px 2px 6px rgba(0,0,0,0.45),
+    -1px -1px 3px rgba(0,0,0,0.1),
+    inset 1px 1px 3px rgba(0,0,0,0.25),
+    inset -1px -1px 2px rgba(212,207,196,0.1);
+  background: rgba(42, 32, 24, 0.78);
 }
 
 /* Label style — vintage engraved brass plate */
@@ -166,11 +194,9 @@ select {
   font-size: 0.85rem;
   background: var(--bakelite);
   color: var(--cream);
-  border: 2px solid var(--wood-mid);
-  border-top-color: var(--wood-dark);
-  border-left-color: var(--wood-dark);
-  border-bottom-color: var(--wood-highlight);
-  border-right-color: var(--wood-highlight);
+  border: 2px solid;
+  border-color: #706858 #c0b8a8 #d0c8b8 #605848;
+  box-shadow: inset 1px 1px 2px rgba(0,0,0,0.3), 1px 1px 2px rgba(0,0,0,0.2);
   padding: 4px 8px;
   cursor: pointer;
   border-radius: 2px;
@@ -203,7 +229,8 @@ select:focus {
 /* Mobile responsive */
 @media (max-width: 767px) {
   .title-glow {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
+    padding: 2px 12px 4px;
   }
 
   .cockpit-main {

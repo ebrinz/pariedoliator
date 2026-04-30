@@ -69,10 +69,9 @@ self.onmessage = async (e: MessageEvent) => {
 
       const result = await transcriber(audio, {
         return_timestamps: false,
-        language: "en",
         task: "transcribe",
-        temperature: Math.max(temperature, 0.6),
-        no_speech_threshold: 0.99,
+        temperature: Math.max(temperature, 0.8),
+        no_speech_threshold: 1.0,
         compression_ratio_threshold: 10.0,
         prompt,
       });
@@ -82,7 +81,8 @@ self.onmessage = async (e: MessageEvent) => {
       if (!text) return;
 
       // Deduplicate single-word repetitions ("yeah, yeah, yeah" → "yeah")
-      const words = text.replace(/[^\w\s]/g, " ").split(/\s+/).filter(Boolean);
+      // Split on whitespace but preserve CJK and other non-Latin scripts
+      const words = text.split(/\s+/).filter(Boolean);
       const unique = [...new Set(words.map((w) => w.toLowerCase()))];
       const deduped = unique.length <= 2 && words.length > 4
         ? unique.join(" ")

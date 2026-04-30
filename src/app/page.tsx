@@ -7,6 +7,7 @@ import NoiseField from "@/components/NoiseField";
 import TranscriptLog from "@/components/TranscriptLog";
 import ZenerStation from "@/components/ZenerStation";
 import BottomBar from "@/components/BottomBar";
+import WoodGrain from "@/components/WoodGrain";
 import { useWebcam } from "@/hooks/useWebcam";
 import { useNoiseAudio } from "@/hooks/useNoiseAudio";
 import { useWhisper } from "@/hooks/useWhisper";
@@ -246,6 +247,8 @@ export default function Home() {
 
   return (
     <div style={styles.cockpit}>
+      <WoodGrain />
+      <div style={styles.content}>
       <TopBar
         model={whisperConfig.model}
         chunkDuration={whisperConfig.chunkDuration}
@@ -314,17 +317,24 @@ export default function Home() {
           isFirstVisit={!hasVisited}
         />
       )}
+      </div>
     </div>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
   cockpit: {
-    display: "flex",
-    flexDirection: "column",
+    position: "relative",
     height: "100vh",
     width: "100vw",
-    background: "linear-gradient(180deg, #3b2a1a 0%, #2a1c10 50%, #1a1008 100%)",
+    overflow: "hidden",
+  },
+  content: {
+    position: "relative",
+    zIndex: 1,
+    display: "flex",
+    flexDirection: "column",
+    height: "100%",
   },
   main: {
     display: "flex",
@@ -345,8 +355,9 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: "center",
     background: "var(--bg-screen)",
     borderRadius: 16,
-    border: "4px solid var(--wood-mid)",
-    boxShadow: "inset 0 0 40px rgba(212,164,74,0.06), 0 4px 12px rgba(0,0,0,0.5)",
+    border: "4px solid",
+    borderColor: "#d4cfc4 #807868 #706858 #ccc6b8",
+    boxShadow: "1px 1px 0 #504840, -1px -1px 0 #e8e2d8, 2px 2px 6px rgba(0,0,0,0.45), inset 0 0 40px rgba(212,164,74,0.06), inset 1px 1px 3px rgba(0,0,0,0.3)",
     overflow: "hidden",
   },
   zener: {
@@ -358,12 +369,13 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: "1.4rem",
     color: "var(--screen-amber-glow)",
     background: "transparent",
-    border: "2px solid var(--screen-amber-dim)",
+    border: "3px solid",
+    borderColor: "#d4cfc4 #807868 #706858 #ccc6b8",
     borderRadius: 4,
     padding: "16px 32px",
     cursor: "pointer",
     textShadow: "0 0 8px var(--screen-amber-dim)",
-    boxShadow: "0 0 16px rgba(212,164,74,0.2)",
+    boxShadow: "1px 1px 0 #504840, -1px -1px 0 #e8e2d8, 2px 2px 6px rgba(0,0,0,0.4), 0 0 12px rgba(212,164,74,0.15)",
     letterSpacing: "0.1em",
   },
 };

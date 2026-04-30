@@ -89,8 +89,8 @@ export class NoiseBabbleSynth {
   }
 
   setCoherence(score: number) {
-    // Remap: 0-50% → 0 (no effect), 50-100% → 0-1 (increasing clarity)
-    this.coherence = Math.max(0, Math.min(1, (score - 50) / 50));
+    // score is -1 to +1; only positive coherence drives the effect
+    this.coherence = Math.max(0, Math.min(1, score));
   }
 
   process(noise: Float32Array): Float32Array {

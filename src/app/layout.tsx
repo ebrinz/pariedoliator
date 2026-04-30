@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PAREIDOLATOR",
+  title: "Pareidolator",
   description:
     "A browser-based pareidolia machine — quantum noise, phantom voices, emergent shapes",
 };

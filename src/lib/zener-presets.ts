@@ -27,7 +27,7 @@ export function generatePresetMask(
 
         case "triangle": {
           const normX = dx / r;
-          const normY = dy / r;
+          const normY = -dy / r;
           const inTri =
             normY >= -0.7 &&
             normY <= 0.8 &&
@@ -46,11 +46,26 @@ export function generatePresetMask(
           break;
 
         case "star": {
-          const angle = Math.atan2(dy, dx);
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const starR =
-            r * (0.4 + 0.6 * Math.abs(Math.cos(2.5 * angle)));
-          mask[idx] = dist <= starR ? 1 : 0;
+          const outerR = r;
+          const innerR = r * 0.38;
+          const pts: [number, number][] = [];
+          for (let k = 0; k < 10; k++) {
+            const a = (k * Math.PI) / 5 - Math.PI / 2;
+            const pr = k % 2 === 0 ? outerR : innerR;
+            pts.push([cx + pr * Math.cos(a), cy + pr * Math.sin(a)]);
+          }
+          let inside = false;
+          for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+            const [xi, yi] = pts[i];
+            const [xj, yj] = pts[j];
+            if (
+              yi > y !== yj > y &&
+              x < ((xj - xi) * (y - yi)) / (yj - yi) + xi
+            ) {
+              inside = !inside;
+            }
+          }
+          mask[idx] = inside ? 1 : 0;
           break;
         }
       }
