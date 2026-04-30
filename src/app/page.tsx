@@ -34,8 +34,8 @@ export default function Home() {
   });
   const [noiseMode, setNoiseMode] = useState<NoiseMode>("phoneme");
   const [babbleSeed, setBabbleSeedState] = useState(50);
-  const [noiseVolume, setNoiseVolume] = useState(0);
-  const [ttsVolume, setTtsVolume] = useState(0);
+  const [noiseVolume, setNoiseVolume] = useState(0.01);
+  const [ttsVolume, setTtsVolume] = useState(0.33);
   const [coherenceScore, setCoherenceScore] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [showIntro, setShowIntro] = useState(true);

@@ -13,12 +13,13 @@ export function useNoiseAudio(): UseNoiseAudioReturn {
   const gainRef = useRef<GainNode | null>(null);
   const bufferQueue = useRef<Float32Array[]>([]);
   const totalSamples = useRef(0);
+  const pendingVolume = useRef(0);
 
   const ensureContext = useCallback(() => {
     if (ctxRef.current) return;
     const ctx = new AudioContext({ sampleRate: 16000 });
     const gain = ctx.createGain();
-    gain.gain.value = 0;
+    gain.gain.value = pendingVolume.current;
     gain.connect(ctx.destination);
     ctxRef.current = ctx;
     gainRef.current = gain;
@@ -84,6 +85,7 @@ export function useNoiseAudio(): UseNoiseAudioReturn {
   );
 
   const setVolume = useCallback((v: number) => {
+    pendingVolume.current = v;
     if (gainRef.current) {
       gainRef.current.gain.value = v;
     }

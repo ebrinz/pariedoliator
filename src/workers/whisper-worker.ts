@@ -69,9 +69,10 @@ self.onmessage = async (e: MessageEvent) => {
 
       const result = await transcriber(audio, {
         return_timestamps: false,
+        language: "en",
         task: "transcribe",
-        temperature: Math.max(temperature, 0.8),
-        no_speech_threshold: 1.0,
+        temperature: Math.max(temperature, 0.6),
+        no_speech_threshold: 0.99,
         compression_ratio_threshold: 10.0,
         prompt,
       });
