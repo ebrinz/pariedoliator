@@ -15,9 +15,12 @@ import {
   extractLSBNoise,
   noiseToPixelGrid,
   noiseToAudioSamples,
+  shapeAudioForSpeech,
+  setBabbleSeed,
 } from "@/lib/noise-extraction";
+import { loadSyllableSprite } from "@/lib/syllable-synth";
 import { correlateNoiseMask } from "@/lib/shape-correlation";
-import type { TranscriptEntry, WhisperConfig } from "@/types";
+import type { TranscriptEntry, WhisperConfig, NoiseMode } from "@/types";
 
 const WEBCAM_W = 320;
 const WEBCAM_H = 240;
@@ -28,6 +31,8 @@ export default function Home() {
     temperature: 0.8,
     chunkDuration: 5,
   });
+  const [noiseMode, setNoiseMode] = useState<NoiseMode>("phoneme");
+  const [babbleSeed, setBabbleSeedState] = useState(50);
   const [noiseVolume, setNoiseVolume] = useState(0);
   const [ttsVolume, setTtsVolume] = useState(0);
   const [coherenceScore, setCoherenceScore] = useState(0);
@@ -62,6 +67,14 @@ export default function Home() {
   const { setVolume: setNoiseAudioVolume, feedSamples, getBufferedAudio } = noiseAudio;
   const { setVolume: setTtsVolume2, speak, stop: stopTts } = tts;
   const { isReady: whisperReady, isLoading: whisperLoading, loadModel, transcribe, entries: whisperEntries } = whisper;
+
+  useEffect(() => {
+    setBabbleSeed(babbleSeed);
+  }, [babbleSeed]);
+
+  useEffect(() => {
+    loadSyllableSprite();
+  }, []);
 
   useEffect(() => {
     setNoiseAudioVolume(noiseVolume);
@@ -200,8 +213,9 @@ export default function Home() {
         const bits = extractLSBNoise(frame, 1);
         const grid = noiseToPixelGrid(bits, WEBCAM_W, WEBCAM_H);
         setNoiseGrid(grid);
-        const samples = noiseToAudioSamples(bits);
-        feedSamples(samples);
+
+        // Compute coherence first so the score feeds into audio shaping
+        let currentCoherence = 0;
         if (targetMask.mask) {
           const result = correlateNoiseMask(
             grid,
@@ -211,9 +225,14 @@ export default function Home() {
             targetMask.width,
             targetMask.height
           );
+          currentCoherence = result.score;
           setCoherenceScore(result.score);
           setTintMap(result.tintMap);
         }
+
+        const rawSamples = noiseToAudioSamples(bits);
+        const samples = shapeAudioForSpeech(rawSamples, noiseMode, 16000, currentCoherence);
+        feedSamples(samples);
       }
       animFrameRef.current = requestAnimationFrame(loop);
     };
@@ -223,7 +242,7 @@ export default function Home() {
       running = false;
       cancelAnimationFrame(animFrameRef.current);
     };
-  }, [isRunning, webcamActive, getFrame, feedSamples, targetMask]);
+  }, [isRunning, webcamActive, getFrame, feedSamples, targetMask, noiseMode]);
 
   return (
     <div style={styles.cockpit}>
@@ -231,6 +250,8 @@ export default function Home() {
         model={whisperConfig.model}
         chunkDuration={whisperConfig.chunkDuration}
         temperature={whisperConfig.temperature}
+        seed={babbleSeed}
+        noiseMode={noiseMode}
         modelLoading={whisperLoading}
         modelReady={whisperReady}
         onModelChange={(model) =>
@@ -242,6 +263,8 @@ export default function Home() {
         onTempChange={(temperature) =>
           setWhisperConfig((c) => ({ ...c, temperature }))
         }
+        onSeedChange={setBabbleSeedState}
+        onNoiseModeChange={setNoiseMode}
         onInfoClick={() => setShowIntro(true)}
       />
       <div style={styles.main} className="cockpit-main">
@@ -255,7 +278,7 @@ export default function Home() {
                 INITIALIZE
               </button>
               {webcam.error && (
-                <p style={{ color: "var(--amber)", marginTop: 12, fontSize: "0.9rem" }}>
+                <p style={{ color: "var(--screen-amber)", marginTop: 12, fontSize: "0.9rem" }}>
                   WEBCAM ERROR: {webcam.error}
                 </p>
               )}
@@ -301,11 +324,14 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     height: "100vh",
     width: "100vw",
+    background: "linear-gradient(180deg, #3b2a1a 0%, #2a1c10 50%, #1a1008 100%)",
   },
   main: {
     display: "flex",
     flex: 1,
     minHeight: 0,
+    padding: "0 8px",
+    gap: 8,
   },
   transcript: {
     width: 220,
@@ -317,7 +343,11 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: "#050505",
+    background: "var(--bg-screen)",
+    borderRadius: 16,
+    border: "4px solid var(--wood-mid)",
+    boxShadow: "inset 0 0 40px rgba(212,164,74,0.06), 0 4px 12px rgba(0,0,0,0.5)",
+    overflow: "hidden",
   },
   zener: {
     width: 200,
@@ -325,13 +355,15 @@ const styles: Record<string, React.CSSProperties> = {
   },
   startBtn: {
     fontFamily: "var(--font-main)",
-    fontSize: "1.5rem",
-    color: "var(--phosphor-green)",
+    fontSize: "1.4rem",
+    color: "var(--screen-amber-glow)",
     background: "transparent",
-    border: "2px solid var(--phosphor-green)",
+    border: "2px solid var(--screen-amber-dim)",
+    borderRadius: 4,
     padding: "16px 32px",
     cursor: "pointer",
-    textShadow: "0 0 8px var(--phosphor-green)",
-    boxShadow: "0 0 16px rgba(51,255,51,0.3)",
+    textShadow: "0 0 8px var(--screen-amber-dim)",
+    boxShadow: "0 0 16px rgba(212,164,74,0.2)",
+    letterSpacing: "0.1em",
   },
 };

@@ -1,14 +1,20 @@
 "use client";
 
+import type { NoiseMode } from "@/types";
+
 interface TopBarProps {
   model: "tiny" | "small";
   chunkDuration: number;
   temperature: number;
+  seed: number;
+  noiseMode: NoiseMode;
   modelLoading: boolean;
   modelReady: boolean;
   onModelChange: (model: "tiny" | "small") => void;
   onChunkChange: (value: number) => void;
   onTempChange: (value: number) => void;
+  onSeedChange: (value: number) => void;
+  onNoiseModeChange: (mode: NoiseMode) => void;
   onInfoClick: () => void;
 }
 
@@ -24,11 +30,15 @@ export default function TopBar({
   model,
   chunkDuration,
   temperature,
+  seed,
+  noiseMode,
   modelLoading,
   modelReady,
   onModelChange,
   onChunkChange,
   onTempChange,
+  onSeedChange,
+  onNoiseModeChange,
   onInfoClick,
 }: TopBarProps) {
   return (
@@ -38,11 +48,11 @@ export default function TopBar({
           <span className="hud-label">
             MODEL{" "}
             {modelLoading ? (
-              <span className="phosphor-pulse" style={{ color: "var(--amber)", fontSize: "0.75rem" }}>
+              <span className="phosphor-pulse" style={{ color: "var(--screen-amber)", fontSize: "0.75rem" }}>
                 LOADING...
               </span>
             ) : modelReady ? (
-              <span style={{ color: "var(--phosphor-green)", fontSize: "0.75rem" }}>●</span>
+              <span style={{ color: "var(--screen-amber-glow)", fontSize: "0.75rem" }}>●</span>
             ) : null}
           </span>
           <select
@@ -52,6 +62,18 @@ export default function TopBar({
           >
             <option value="tiny">TINY</option>
             <option value="small">SMALL</option>
+          </select>
+        </label>
+        <label style={styles.control}>
+          <span className="hud-label">NOISE</span>
+          <select
+            value={noiseMode}
+            onChange={(e) => onNoiseModeChange(e.target.value as NoiseMode)}
+          >
+            <option value="whisper">WHISPER</option>
+            <option value="phoneme">PHONEME</option>
+            <option value="voice">VOICE</option>
+            <option value="raw">RAW</option>
           </select>
         </label>
         <label style={styles.control}>
@@ -80,6 +102,18 @@ export default function TopBar({
             style={{ width: 100 }}
           />
         </label>
+        <label style={styles.control}>
+          <span className="hud-label">SEED {seed}</span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={seed}
+            onChange={(e) => onSeedChange(Number(e.target.value))}
+            style={{ width: 100 }}
+          />
+        </label>
       </div>
       <div style={styles.titleArea}>
         <h1 className="title-glow">PAREIDOLATOR</h1>
@@ -105,12 +139,12 @@ const styles: Record<string, React.CSSProperties> = {
   infoBtn: {
     fontFamily: "var(--font-main)",
     fontSize: "1.25rem",
-    color: "var(--phosphor-green)",
+    color: "var(--screen-amber-glow)",
     background: "transparent",
-    border: "1px solid var(--phosphor-green-dim)",
+    border: "1px solid var(--screen-amber-dim)",
     width: 32,
     height: 32,
     cursor: "pointer",
-    textShadow: "0 0 4px var(--phosphor-green)",
+    textShadow: "0 0 4px var(--screen-amber)",
   },
 };

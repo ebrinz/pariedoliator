@@ -47,7 +47,7 @@ export default function BottomBar({
         onClick={onRecordClick}
         style={{
           ...styles.recBtn,
-          color: isRecording ? "#ff3333" : "var(--phosphor-green-dim)",
+          color: isRecording ? "#ff3333" : "var(--screen-amber-dim)",
           borderColor: isRecording ? "#ff3333" : "var(--border-color)",
         }}
       >

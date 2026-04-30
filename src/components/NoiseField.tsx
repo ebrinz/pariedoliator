@@ -59,9 +59,9 @@ export default function NoiseField({
       const base = i * 4;
       if (tintMap && tintMap[i] > 0) {
         const tint = tintMap[i] / 255;
-        data[base] = Math.round(v * (1 - tint) + 51 * tint);
-        data[base + 1] = Math.round(v * (1 - tint) + 255 * tint);
-        data[base + 2] = Math.round(v * (1 - tint) + 51 * tint);
+        data[base] = Math.round(v * (1 - tint) + 212 * tint);
+        data[base + 1] = Math.round(v * (1 - tint) + 164 * tint);
+        data[base + 2] = Math.round(v * (1 - tint) + 74 * tint);
       } else {
         data[base] = v;
         data[base + 1] = v;

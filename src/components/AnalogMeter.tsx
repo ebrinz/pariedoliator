@@ -35,7 +35,7 @@ export default function AnalogMeter({
     // Arc background
     ctx.beginPath();
     ctx.arc(cx, cy, radius, Math.PI, 0);
-    ctx.strokeStyle = "#1a3a1a";
+    ctx.strokeStyle = "#3a2a1a";
     ctx.lineWidth = 2;
     ctx.stroke();
 
@@ -47,7 +47,7 @@ export default function AnalogMeter({
       ctx.beginPath();
       ctx.moveTo(cx + Math.cos(angle) * inner, cy + Math.sin(angle) * inner);
       ctx.lineTo(cx + Math.cos(angle) * outer, cy + Math.sin(angle) * outer);
-      ctx.strokeStyle = "#1a8c1a";
+      ctx.strokeStyle = "#8b6d2e";
       ctx.lineWidth = 1;
       ctx.stroke();
     }
@@ -61,22 +61,22 @@ export default function AnalogMeter({
       cx + Math.cos(needleAngle) * needleLen,
       cy + Math.sin(needleAngle) * needleLen
     );
-    ctx.strokeStyle = "#33ff33";
+    ctx.strokeStyle = "#e8c874";
     ctx.lineWidth = 2;
     ctx.stroke();
 
     // Needle glow
-    ctx.shadowColor = "#33ff33";
+    ctx.shadowColor = "#d4a44a";
     ctx.shadowBlur = 8;
     ctx.beginPath();
     ctx.arc(cx, cy, 3, 0, Math.PI * 2);
-    ctx.fillStyle = "#33ff33";
+    ctx.fillStyle = "#e8c874";
     ctx.fill();
     ctx.shadowBlur = 0;
 
     // Label
-    ctx.font = "12px VT323";
-    ctx.fillStyle = "#1a8c1a";
+    ctx.font = "12px 'Courier Prime', monospace";
+    ctx.fillStyle = "#8b6d2e";
     ctx.textAlign = "left";
     ctx.fillText("0", cx - radius + 5, cy - 4);
     ctx.textAlign = "right";

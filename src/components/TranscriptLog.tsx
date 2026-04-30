@@ -46,9 +46,9 @@ export default function TranscriptLog({ entries, modelLoading, modelReady }: Tra
                 style={{
                   color: isHighConf
                     ? "var(--text-highlight)"
-                    : `rgba(255,255,255,${brightness})`,
+                    : `rgba(240,230,210,${brightness})`,
                   textShadow: isHighConf
-                    ? "0 0 6px var(--amber)"
+                    ? "0 0 6px var(--screen-amber)"
                     : "none",
                 }}
               >

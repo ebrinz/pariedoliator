@@ -16,6 +16,8 @@ export interface CoherenceResult {
   tintMap: Uint8Array | null;
 }
 
+export type NoiseMode = "raw" | "voice" | "whisper" | "phoneme";
+
 export interface WhisperConfig {
   model: "tiny" | "small";
   temperature: number;

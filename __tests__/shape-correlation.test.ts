@@ -2,35 +2,57 @@ import { describe, it, expect } from "vitest";
 import { correlateNoiseMask } from "@/lib/shape-correlation";
 
 describe("correlateNoiseMask", () => {
-  it("scores well above 50 when noise matches mask perfectly", () => {
-    const size = 100;
+  it("scores well above 50 when noise is bright inside and dark outside mask", () => {
+    const w = 10, h = 10, size = w * h;
     const mask = new Uint8Array(size);
     const noise = new Float32Array(size);
     for (let i = 0; i < size; i++) {
-      mask[i] = 1;
-      noise[i] = 1;
+      // Mask: top half is inside
+      mask[i] = i < size / 2 ? 1 : 0;
+      // Noise: bright inside, dark outside
+      noise[i] = i < size / 2 ? 0.9 : 0.1;
     }
-    const result = correlateNoiseMask(noise, mask, 10, 10, 10, 10);
+    const result = correlateNoiseMask(noise, mask, w, h, w, h);
     expect(result.score).toBeGreaterThan(90);
   });
 
-  it("returns ~50% for uncorrelated random data", () => {
-    const size = 1000;
+  it("scores near 50 for uniform noise regardless of mask", () => {
+    const w = 20, h = 20, size = w * h;
     const mask = new Uint8Array(size);
     const noise = new Float32Array(size);
     for (let i = 0; i < size; i++) {
-      mask[i] = i % 2;
-      noise[i] = (i + 1) % 2;
+      mask[i] = i < size / 2 ? 1 : 0;
+      noise[i] = 0.5;
     }
-    const result = correlateNoiseMask(
-      noise,
-      mask,
-      Math.sqrt(size),
-      Math.sqrt(size),
-      Math.sqrt(size),
-      Math.sqrt(size)
-    );
+    const result = correlateNoiseMask(noise, mask, w, h, w, h);
+    expect(result.score).toBeGreaterThanOrEqual(45);
+    expect(result.score).toBeLessThanOrEqual(55);
+  });
+
+  it("scores below 50 when noise is inverted relative to mask", () => {
+    const w = 10, h = 10, size = w * h;
+    const mask = new Uint8Array(size);
+    const noise = new Float32Array(size);
+    for (let i = 0; i < size; i++) {
+      mask[i] = i < size / 2 ? 1 : 0;
+      // Inverted: dark inside, bright outside
+      noise[i] = i < size / 2 ? 0.1 : 0.9;
+    }
+    const result = correlateNoiseMask(noise, mask, w, h, w, h);
     expect(result.score).toBeLessThan(10);
+  });
+
+  it("all-bright noise no longer scores 100 (old bug)", () => {
+    const w = 10, h = 10, size = w * h;
+    const mask = new Uint8Array(size);
+    const noise = new Float32Array(size);
+    for (let i = 0; i < size; i++) {
+      mask[i] = i < size / 3 ? 1 : 0;
+      noise[i] = 1.0; // everything bright
+    }
+    const result = correlateNoiseMask(noise, mask, w, h, w, h);
+    // Should be ~50%, not 100%, because outside is also bright
+    expect(result.score).toBeLessThan(60);
   });
 
   it("returns a tintMap with correct dimensions", () => {

@@ -65,7 +65,15 @@ export function useWhisper(): UseWhisperReturn {
           timestamp: Date.now(),
         };
 
-        setEntries((prev) => [...prev.slice(-100), entry]);
+        setEntries((prev) => {
+          // Deduplicate: skip if same text as last 3 entries
+          const recent = prev.slice(-3);
+          const newText = tokens.map((t) => t.text).join("").trim();
+          if (recent.some((r) => r.tokens.map((t) => t.text).join("").trim() === newText)) {
+            return prev;
+          }
+          return [...prev.slice(-100), entry];
+        });
       } else if (type === "error") {
         console.error("Whisper worker error:", e.data.error);
       }

@@ -17,7 +17,6 @@ const PRESET_LABELS: Record<ZenerShape, string> = {
   star: "☆",
   plus: "+",
 };
-const ROTATION_INTERVAL = 45000;
 const CANVAS_SIZE = 120;
 
 export default function ZenerStation({
@@ -28,8 +27,6 @@ export default function ZenerStation({
   const [isDrawing, setIsDrawing] = useState(false);
   const [locked, setLocked] = useState(false);
   const [activePreset, setActivePreset] = useState<ZenerShape | null>(null);
-  const rotationRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const presetIdxRef = useRef(0);
 
   const drawPresetToCanvas = useCallback(
     (shape: ZenerShape) => {
@@ -61,25 +58,10 @@ export default function ZenerStation({
       setActivePreset(shape);
       setLocked(true);
       drawPresetToCanvas(shape);
-      if (rotationRef.current) {
-        clearInterval(rotationRef.current);
-        rotationRef.current = null;
-      }
     },
     [drawPresetToCanvas]
   );
 
-  const startRotation = useCallback(() => {
-    if (rotationRef.current) clearInterval(rotationRef.current);
-    const rotate = () => {
-      const shape = PRESETS[presetIdxRef.current % PRESETS.length];
-      presetIdxRef.current++;
-      setActivePreset(shape);
-      drawPresetToCanvas(shape);
-    };
-    rotate();
-    rotationRef.current = setInterval(rotate, ROTATION_INTERVAL);
-  }, [drawPresetToCanvas]);
 
   const clearCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -91,15 +73,12 @@ export default function ZenerStation({
     onMaskChange(null, 0, 0);
     setLocked(false);
     setActivePreset(null);
-    startRotation();
-  }, [onMaskChange, startRotation]);
+  }, [onMaskChange]);
 
   useEffect(() => {
-    startRotation();
-    return () => {
-      if (rotationRef.current) clearInterval(rotationRef.current);
-    };
-  }, [startRotation]);
+    drawPresetToCanvas("circle");
+    setActivePreset("circle");
+  }, [drawPresetToCanvas]);
 
   const extractFreehandMask = useCallback(() => {
     const canvas = canvasRef.current;
@@ -119,10 +98,6 @@ export default function ZenerStation({
     (e: React.PointerEvent) => {
       setIsDrawing(true);
       setActivePreset(null);
-      if (rotationRef.current) {
-        clearInterval(rotationRef.current);
-        rotationRef.current = null;
-      }
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext("2d");
@@ -186,10 +161,10 @@ export default function ZenerStation({
               ...styles.presetBtn,
               borderColor:
                 activePreset === p
-                  ? "var(--phosphor-green)"
+                  ? "var(--screen-amber-glow)"
                   : "var(--border-color)",
               textShadow:
-                activePreset === p ? "0 0 6px var(--phosphor-green)" : "none",
+                activePreset === p ? "0 0 6px var(--screen-amber)" : "none",
             }}
           >
             {PRESET_LABELS[p]}
@@ -202,7 +177,7 @@ export default function ZenerStation({
       <div style={{ marginTop: 12, textAlign: "center", width: "100%" }}>
         <AnalogMeter value={coherenceScore} />
         <div className="hud-label" style={{ marginTop: 4 }}>COHERENCE</div>
-        <div style={{ fontSize: "1.5rem", color: "var(--phosphor-green)" }}>
+        <div style={{ fontSize: "1.5rem", color: "var(--screen-amber-glow)" }}>
           {coherenceScore.toFixed(1)}%
         </div>
       </div>
@@ -224,7 +199,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: "100%",
     maxWidth: 150,
     aspectRatio: "1",
-    border: "1px solid var(--phosphor-green-dim)",
+    border: "1px solid var(--screen-amber-dim)",
     cursor: "crosshair",
     touchAction: "none",
   },
@@ -235,7 +210,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: 32,
     height: 32,
     background: "var(--bg-dark)",
-    color: "var(--phosphor-green)",
+    color: "var(--screen-amber-glow)",
     border: "1px solid var(--border-color)",
     cursor: "pointer",
     minHeight: 44,
@@ -247,7 +222,7 @@ const styles: Record<string, React.CSSProperties> = {
   clearBtn: {
     fontFamily: "var(--font-main)",
     fontSize: "0.75rem",
-    color: "var(--phosphor-green-dim)",
+    color: "var(--screen-amber-dim)",
     background: "transparent",
     border: "1px solid var(--border-color)",
     padding: "2px 8px",

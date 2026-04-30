@@ -13,41 +13,81 @@ export function correlateNoiseMask(
   const scaleX = maskW / noiseW;
   const scaleY = maskH / noiseH;
 
-  let matchCount = 0;
-  let maskPixelCount = 0;
-  const threshold = 0.5;
+  let insideSum = 0;
+  let insideCount = 0;
+  let outsideSum = 0;
+  let outsideCount = 0;
 
   for (let y = 0; y < noiseH; y++) {
     for (let x = 0; x < noiseW; x++) {
       const mx = Math.min(Math.floor(x * scaleX), maskW - 1);
       const my = Math.min(Math.floor(y * scaleY), maskH - 1);
       const maskVal = mask[my * maskW + mx];
+      const noiseVal = noise[y * noiseW + x];
 
       if (maskVal > 0) {
-        maskPixelCount++;
-        const noiseVal = noise[y * noiseW + x];
+        insideSum += noiseVal;
+        insideCount++;
 
-        if (noiseVal >= threshold) {
-          matchCount++;
+        if (noiseVal >= 0.5) {
           const intensity = Math.round(
-            ((noiseVal - threshold) / (1 - threshold)) * 180
+            ((noiseVal - 0.5) / 0.5) * 180
           );
           tintMap[y * noiseW + x] = intensity;
         }
+      } else {
+        outsideSum += noiseVal;
+        outsideCount++;
       }
     }
   }
 
-  if (maskPixelCount === 0) return { score: 0, tintMap };
+  if (insideCount === 0 || outsideCount === 0) return { score: 0, tintMap };
 
-  // z-score: how far above the expected 50% random baseline
-  const observed = matchCount / maskPixelCount;
-  const expected = 0.5;
-  const stddev = Math.sqrt((expected * (1 - expected)) / maskPixelCount);
-  const z = stddev > 0 ? (observed - expected) / stddev : 0;
+  const meanInside = insideSum / insideCount;
+  const meanOutside = outsideSum / outsideCount;
+  const contrast = meanInside - meanOutside;
 
-  // Map z-score to 0-100: z=0 → 50%, z>=3 → 100%, z<=-3 → 0%
-  const score = Math.max(0, Math.min(100, (z / 3) * 50 + 50));
+  // Compute pooled variance for z-score
+  let varInside = 0;
+  let varOutside = 0;
+
+  for (let y = 0; y < noiseH; y++) {
+    for (let x = 0; x < noiseW; x++) {
+      const mx = Math.min(Math.floor(x * scaleX), maskW - 1);
+      const my = Math.min(Math.floor(y * scaleY), maskH - 1);
+      const maskVal = mask[my * maskW + mx];
+      const noiseVal = noise[y * noiseW + x];
+
+      if (maskVal > 0) {
+        const d = noiseVal - meanInside;
+        varInside += d * d;
+      } else {
+        const d = noiseVal - meanOutside;
+        varOutside += d * d;
+      }
+    }
+  }
+
+  varInside /= insideCount;
+  varOutside /= outsideCount;
+
+  // Require meaningful effect size — tiny sensor bias with huge N shouldn't score high
+  const minContrast = 0.03;
+  if (Math.abs(contrast) < minContrast) return { score: 50, tintMap };
+
+  const se = Math.sqrt(varInside / insideCount + varOutside / outsideCount);
+  let z: number;
+  if (se > 0) {
+    z = contrast / se;
+  } else {
+    z = contrast > 0.001 ? 5 : contrast < -0.001 ? -5 : 0;
+  }
+
+  // Scale by effect size so weak-but-significant effects don't max out
+  const effectScale = Math.min(1, Math.abs(contrast) / 0.15);
+  const rawScore = (z / 4) * 50 + 50;
+  const score = Math.max(0, Math.min(100, 50 + (rawScore - 50) * effectScale));
 
   return { score, tintMap };
 }
