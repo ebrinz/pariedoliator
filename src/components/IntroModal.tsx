@@ -109,13 +109,13 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     zIndex: 10000,
-    padding: 16,
+    padding: "clamp(8px, 3vw, 16px)",
   },
   modal: {
     maxWidth: 520,
     width: "100%",
-    padding: 32,
-    maxHeight: "90vh",
+    padding: "clamp(16px, 4vw, 32px)",
+    maxHeight: "90dvh",
     overflowY: "auto",
   },
   tagline: {

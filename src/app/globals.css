@@ -38,6 +38,15 @@ body {
   color: var(--cream);
   font-family: var(--font-main);
   font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@supports (height: 100dvh) {
+  html,
+  body {
+    height: 100dvh;
+  }
 }
 
 /* Scanlines — only on the noise field screen */
@@ -226,60 +235,118 @@ select:focus {
   animation: warm-pulse 3s ease-in-out infinite;
 }
 
-/* Mobile responsive */
+/* Mobile responsive — iPhone & narrow tablets */
 @media (max-width: 767px) {
   .title-glow {
-    font-size: 1.4rem;
-    padding: 2px 12px 4px;
+    font-size: 1.25rem;
+    padding: 2px 10px 4px;
+    letter-spacing: 0.02em;
   }
 
+  .cockpit-topbar {
+    padding: 6px 8px !important;
+    gap: 8px !important;
+    justify-content: center !important;
+  }
+
+  .cockpit-topbar-controls {
+    width: 100%;
+    gap: 6px !important;
+    justify-content: space-around !important;
+  }
+
+  .cockpit-topbar-title {
+    width: 100%;
+    justify-content: center !important;
+  }
+
+  /* Hero on top spanning both columns; transcript + zener share the bottom row */
   .cockpit-main {
-    flex-direction: column !important;
+    display: grid !important;
+    grid-template-columns: 1fr 150px;
+    grid-template-rows: 1fr 220px;
+    grid-template-areas:
+      "hero hero"
+      "transcript zener";
+    padding: 0 6px !important;
+    gap: 6px !important;
   }
 
-  .cockpit-transcript {
-    width: 100% !important;
-    height: auto !important;
-    max-height: 150px;
-    order: 2;
+  /* Freehand drawing is impractical at this size; rely on the preset dial */
+  .zener-freehand,
+  .zener-clear-btn {
+    display: none !important;
   }
 
   .cockpit-hero {
-    width: 100% !important;
-    min-height: 200px;
-    max-height: 40vh;
-    order: 1;
-  }
-
-  .cockpit-zener {
-    width: 100% !important;
-    height: auto !important;
-    order: 3;
-  }
-
-  .cockpit-bottom-panels {
-    display: flex !important;
-    flex-direction: row;
-    order: 2;
-  }
-
-  .cockpit-transcript,
-  .cockpit-zener {
-    flex: 1;
-    min-width: 0;
-  }
-}
-
-@media (max-height: 500px) {
-  .title-glow {
-    font-size: 1.1rem;
+    grid-area: hero;
+    width: auto !important;
+    min-height: 180px;
   }
 
   .cockpit-transcript {
-    width: 160px !important;
+    grid-area: transcript;
+    width: auto !important;
+    height: auto !important;
+    min-width: 0;
   }
 
   .cockpit-zener {
-    width: 160px !important;
+    grid-area: zener;
+    width: auto !important;
+    height: auto !important;
+  }
+
+  .cockpit-bottombar {
+    padding: 4px 8px !important;
+    gap: 16px !important;
+    flex-wrap: wrap;
+  }
+}
+
+/* Very narrow — small iPhones, e.g. SE */
+@media (max-width: 380px) {
+  .cockpit-topbar-controls {
+    gap: 4px !important;
+  }
+  .cockpit-main {
+    grid-template-columns: 1fr 130px !important;
+  }
+}
+
+/* Landscape phones — three columns but compressed */
+@media (max-height: 500px) and (orientation: landscape) {
+  .title-glow {
+    font-size: 1rem;
+    padding: 1px 8px 2px;
+  }
+
+  .cockpit-main {
+    display: flex !important;
+    flex-direction: row !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    grid-template-areas: none !important;
+  }
+
+  .cockpit-transcript {
+    width: 140px !important;
+    height: 100% !important;
+    flex: 0 0 140px !important;
+  }
+
+  .cockpit-zener {
+    width: 140px !important;
+    height: 100% !important;
+    flex: 0 0 140px !important;
+  }
+
+  .cockpit-hero {
+    flex: 1 1 auto !important;
+  }
+
+  .zener-freehand,
+  .zener-clear-btn {
+    display: block !important;
   }
 }

@@ -325,9 +325,13 @@ export default function Home() {
 const styles: Record<string, React.CSSProperties> = {
   cockpit: {
     position: "relative",
-    height: "100vh",
+    height: "100dvh",
     width: "100vw",
     overflow: "hidden",
+    paddingTop: "env(safe-area-inset-top)",
+    paddingBottom: "env(safe-area-inset-bottom)",
+    paddingLeft: "env(safe-area-inset-left)",
+    paddingRight: "env(safe-area-inset-right)",
   },
   content: {
     position: "relative",

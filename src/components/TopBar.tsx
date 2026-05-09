@@ -48,8 +48,8 @@ export default function TopBar({
   onInfoClick,
 }: TopBarProps) {
   return (
-    <div className="panel" style={styles.bar}>
-      <div style={styles.controls}>
+    <div className="panel cockpit-topbar" style={styles.bar}>
+      <div style={styles.controls} className="cockpit-topbar-controls">
         <SelectorKnob
           label="MODEL"
           options={MODEL_OPTIONS}
@@ -91,9 +91,13 @@ export default function TopBar({
           onChange={onSeedChange}
         />
       </div>
-      <div style={styles.titleArea}>
+      <div style={styles.titleArea} className="cockpit-topbar-title">
         <h1 className="title-glow">Pareidolator</h1>
-        <button onClick={onInfoClick} style={styles.infoBtn}>
+        <button
+          onClick={onInfoClick}
+          aria-label="Info"
+          style={styles.infoBtn}
+        >
           ?
         </button>
       </div>
@@ -108,12 +112,14 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     padding: "6px 16px",
     gap: 16,
+    flexWrap: "wrap",
   },
   controls: {
     display: "flex",
     gap: 12,
     alignItems: "center",
     flexWrap: "wrap",
+    justifyContent: "center",
   },
   titleArea: {
     display: "flex",

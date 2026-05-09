@@ -156,6 +156,7 @@ export default function ZenerStation({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
+        className="zener-freehand"
         style={styles.drawCanvas}
       />
 
@@ -310,7 +311,11 @@ export default function ZenerStation({
         />
       </svg>
 
-      <button onClick={clearCanvas} style={styles.clearBtn}>
+      <button
+        onClick={clearCanvas}
+        className="zener-clear-btn"
+        style={styles.clearBtn}
+      >
         CLEAR
       </button>
 

@@ -20,7 +20,7 @@ export default function BottomBar({
   isRecording,
 }: BottomBarProps) {
   return (
-    <div className="panel" style={styles.bar}>
+    <div className="panel cockpit-bottombar" style={styles.bar}>
       <Knob
         label="NOISE"
         value={noiseVolume}
