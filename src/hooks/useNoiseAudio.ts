@@ -6,7 +6,10 @@ interface UseNoiseAudioReturn {
   feedSamples: (samples: Float32Array) => void;
   getBufferedAudio: (durationSec: number, sampleRate: number) => Float32Array;
   setVolume: (v: number) => void;
+  unlock: () => void;
 }
+
+type AudioContextCtor = typeof AudioContext;
 
 export function useNoiseAudio(): UseNoiseAudioReturn {
   const ctxRef = useRef<AudioContext | null>(null);
@@ -17,13 +20,43 @@ export function useNoiseAudio(): UseNoiseAudioReturn {
 
   const ensureContext = useCallback(() => {
     if (ctxRef.current) return;
-    const ctx = new AudioContext({ sampleRate: 16000 });
+    const Ctor: AudioContextCtor | undefined =
+      typeof window !== "undefined"
+        ? window.AudioContext ||
+          (window as unknown as { webkitAudioContext?: AudioContextCtor })
+            .webkitAudioContext
+        : undefined;
+    if (!Ctor) return;
+    let ctx: AudioContext;
+    try {
+      ctx = new Ctor({ sampleRate: 16000 });
+    } catch {
+      // iOS Safari historically rejects explicit sampleRate; fall back to default
+      ctx = new Ctor();
+    }
     const gain = ctx.createGain();
     gain.gain.value = pendingVolume.current;
     gain.connect(ctx.destination);
     ctxRef.current = ctx;
     gainRef.current = gain;
   }, []);
+
+  // Call synchronously inside a user-gesture handler to satisfy iOS Safari's
+  // autoplay policy: creates the AudioContext, resumes it, and plays a 1-sample
+  // silent buffer to fully unlock the audio route.
+  const unlock = useCallback(() => {
+    ensureContext();
+    const ctx = ctxRef.current;
+    if (!ctx) return;
+    if (ctx.state === "suspended") {
+      void ctx.resume();
+    }
+    const silent = ctx.createBuffer(1, 1, ctx.sampleRate);
+    const src = ctx.createBufferSource();
+    src.buffer = silent;
+    src.connect(ctx.destination);
+    src.start(0);
+  }, [ensureContext]);
 
   const feedSamples = useCallback((samples: Float32Array) => {
     bufferQueue.current.push(samples);
@@ -92,7 +125,7 @@ export function useNoiseAudio(): UseNoiseAudioReturn {
   }, []);
 
   return useMemo(
-    () => ({ feedSamples, getBufferedAudio, setVolume }),
-    [feedSamples, getBufferedAudio, setVolume]
+    () => ({ feedSamples, getBufferedAudio, setVolume, unlock }),
+    [feedSamples, getBufferedAudio, setVolume, unlock]
   );
 }

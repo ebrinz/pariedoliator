@@ -65,8 +65,18 @@ export default function Home() {
     startTime: number;
   }>({ entries: [], coherenceLog: [], startTime: 0 });
 
-  const { setVolume: setNoiseAudioVolume, feedSamples, getBufferedAudio } = noiseAudio;
-  const { setVolume: setTtsVolume2, speak, stop: stopTts } = tts;
+  const {
+    setVolume: setNoiseAudioVolume,
+    feedSamples,
+    getBufferedAudio,
+    unlock: unlockNoiseAudio,
+  } = noiseAudio;
+  const {
+    setVolume: setTtsVolume2,
+    speak,
+    stop: stopTts,
+    unlock: unlockTts,
+  } = tts;
   const { isReady: whisperReady, isLoading: whisperLoading, loadModel, transcribe, entries: whisperEntries } = whisper;
 
   useEffect(() => {
@@ -155,16 +165,22 @@ export default function Home() {
   );
 
   const startSession = useCallback(async () => {
+    // iOS Safari: unlock audio synchronously inside the user gesture, BEFORE
+    // any await — otherwise AudioContext stays suspended and TTS is blocked.
+    unlockNoiseAudio();
+    unlockTts();
     await webcam.start();
     setIsRunning(true);
-  }, [webcam.start]);
+  }, [webcam.start, unlockNoiseAudio, unlockTts]);
 
   const handleIntroStart = useCallback(async () => {
+    unlockNoiseAudio();
+    unlockTts();
     localStorage.setItem("pareidolator-visited", "true");
     setShowIntro(false);
     setHasVisited(true);
     await startSession();
-  }, [startSession]);
+  }, [startSession, unlockNoiseAudio, unlockTts]);
 
   const handleIntroClose = useCallback(() => {
     setShowIntro(false);
