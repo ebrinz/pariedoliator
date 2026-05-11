@@ -40,17 +40,18 @@ export default function AnalogMeter({
     ctx.fillStyle = "#f0e8d4";
     ctx.fill();
 
-    // Red → white → red arc bands (-1 to +1 mapped to 0–1 for arc position)
+    // Left half: red → cream (incoherent / anti-signal warm side)
+    // Right half: cream → ecto-green (paranormal signal coming through)
     const zones: [number, number, string][] = [
       [0, 0.1, "#c03030"],
       [0.1, 0.2, "#d06040"],
       [0.2, 0.3, "#e09868"],
       [0.3, 0.42, "#e8c8a0"],
       [0.42, 0.58, "#f0e8d4"],
-      [0.58, 0.7, "#e8c8a0"],
-      [0.7, 0.8, "#e09868"],
-      [0.8, 0.9, "#d06040"],
-      [0.9, 1.0, "#c03030"],
+      [0.58, 0.7, "#c8e8d8"],
+      [0.7, 0.8, "#90d8b8"],
+      [0.8, 0.9, "#5fd8a0"],
+      [0.9, 1.0, "#7fffd4"],
     ];
     for (const [s, e, c] of zones) {
       const a0 = Math.PI + s * Math.PI;
@@ -95,6 +96,26 @@ export default function AnalogMeter({
     const norm = (v + 1) / 2;
     const na = Math.PI + norm * Math.PI;
     const nLen = R;
+
+    // Ectoplasmic glow halo — phosphor wash that intensifies with positive coherence
+    if (v > 0.05) {
+      const tipX = cx + Math.cos(na) * nLen * 0.85;
+      const tipY = cy + Math.sin(na) * nLen * 0.85;
+      const intensity = Math.min(1, v);
+      const halo = ctx.createRadialGradient(tipX, tipY, 0, tipX, tipY, nLen * 0.75);
+      halo.addColorStop(0, `rgba(127, 255, 212, ${0.55 * intensity})`);
+      halo.addColorStop(0.5, `rgba(95, 216, 160, ${0.25 * intensity})`);
+      halo.addColorStop(1, "rgba(127, 255, 212, 0)");
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R + 3, Math.PI, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
     ctx.beginPath();
     ctx.moveTo(cx + 0.5, cy + 0.5);
     ctx.lineTo(
@@ -113,7 +134,7 @@ export default function AnalogMeter({
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // Red needle tip
+    // Needle tip: red on anti-signal side, ecto-green on signal side
     const tipR = nLen * 0.6;
     ctx.beginPath();
     ctx.moveTo(
@@ -121,9 +142,25 @@ export default function AnalogMeter({
       cy + Math.sin(na) * tipR
     );
     ctx.lineTo(cx + Math.cos(na) * nLen, cy + Math.sin(na) * nLen);
-    ctx.strokeStyle = "#c03030";
+    ctx.strokeStyle = v > 0 ? "#3aa878" : "#c03030";
     ctx.lineWidth = 1.5;
     ctx.stroke();
+
+    // Soft phosphor highlight on the tip when signal is strong
+    if (v > 0.3) {
+      const glowTipX = cx + Math.cos(na) * nLen;
+      const glowTipY = cy + Math.sin(na) * nLen;
+      const tipGlow = ctx.createRadialGradient(glowTipX, glowTipY, 0, glowTipX, glowTipY, 8);
+      tipGlow.addColorStop(0, `rgba(180, 255, 220, ${Math.min(0.8, v)})`);
+      tipGlow.addColorStop(1, "rgba(127, 255, 212, 0)");
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.fillStyle = tipGlow;
+      ctx.beginPath();
+      ctx.arc(glowTipX, glowTipY, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
 
     // Chrome pivot screw
     const pg = ctx.createRadialGradient(cx - 1, cy - 1, 0, cx, cy, 5);
