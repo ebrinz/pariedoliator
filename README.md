@@ -1,6 +1,6 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-**Live:** [ebrinz.github.io/pariedoliator](https://ebrinz.github.io/pariedoliator/)
+**Live:** [pariedoliator.vercel.app](https://pariedoliator.vercel.app/)
 
 ## Getting Started
 
