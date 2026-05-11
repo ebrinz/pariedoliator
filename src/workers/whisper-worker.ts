@@ -9,14 +9,16 @@ let extraSuppressTokens: number[] = [];
 const NON_SPEECH_CHARS = ["[", " [", "(", " (", "*", " *", "♪", "♫", "♬"];
 
 const PROMPTS = [
-  "The strange voice whispered something about",
-  "She kept repeating the same warning over and over",
-  "The recording was barely audible but seemed to say",
-  "In the static between stations you could almost hear",
-  "The old tape recorder played back fragments of",
-  "Someone on the other end of the line was saying",
-  "Through the interference came what sounded like",
-  "The last transmission before contact was lost said",
+  "Through the static, distinctly, the voice said: ",
+  "She leaned close to the receiver and whispered: ",
+  "The medium relayed the spirit's exact words: ",
+  "From the dead air came a clear sentence: ",
+  "The recording played back, and the voice said: ",
+  "On the other end of the line, the voice repeated: ",
+  "The final transmission contained these words: ",
+  "Between bursts of interference, audible and plain: ",
+  "The cassette tape held a single phrase: ",
+  "The operator overheard them say: ",
 ];
 
 async function ensurePipeline() {
@@ -91,7 +93,8 @@ self.onmessage = async (e: MessageEvent) => {
         language: "en",
         task: "transcribe",
         temperature: Math.max(temperature, 0.8),
-        no_speech_threshold: 0.99,
+        no_speech_threshold: 1.0,
+        logprob_threshold: -2.0,
         compression_ratio_threshold: 10.0,
         prompt,
         ...(extraSuppressTokens.length > 0 && {

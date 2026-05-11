@@ -30,11 +30,11 @@ export default function Home() {
   const [whisperConfig, setWhisperConfig] = useState<WhisperConfig>({
     model: "tiny",
     temperature: 0.8,
-    chunkDuration: 5,
+    chunkDuration: 4,
   });
   const [noiseMode, setNoiseMode] = useState<NoiseMode>("phoneme");
   const [babbleSeed, setBabbleSeedState] = useState(50);
-  const [noiseVolume, setNoiseVolume] = useState(0.01);
+  const [noiseVolume, setNoiseVolume] = useState(0.02);
   const [ttsVolume, setTtsVolume] = useState(0.33);
   const [coherenceScore, setCoherenceScore] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
