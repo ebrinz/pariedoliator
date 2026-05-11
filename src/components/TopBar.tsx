@@ -92,7 +92,7 @@ export default function TopBar({
         />
       </div>
       <div style={styles.titleArea} className="cockpit-topbar-title">
-        <h1 className="title-glow">Pareidolator</h1>
+        <h1 className="title-glow">Paranormalizer</h1>
         <button
           onClick={onInfoClick}
           aria-label="Info"

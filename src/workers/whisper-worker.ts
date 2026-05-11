@@ -4,6 +4,9 @@ let pipeline: any = null;
 let transcriber: any = null;
 let currentModel: string | null = null;
 let promptIndex = 0;
+let extraSuppressTokens: number[] = [];
+
+const NON_SPEECH_CHARS = ["[", " [", "(", " (", "*", " *", "♪", "♫", "♬"];
 
 const PROMPTS = [
   "The strange voice whispered something about",
@@ -41,6 +44,22 @@ async function loadModel(model: "tiny" | "small") {
     dtype: "fp32",
   });
   currentModel = modelId;
+
+  // Suppress bracket/asterisk tokens so Whisper hallucinates words instead of
+  // emitting non-speech annotations like "[applause]" or "(water dripping)".
+  const ids = new Set<number>();
+  const tokenizer: any = transcriber?.tokenizer;
+  for (const ch of NON_SPEECH_CHARS) {
+    try {
+      const out = tokenizer?.encode?.(ch, null, { add_special_tokens: false });
+      const list = Array.isArray(out) ? out : out?.input_ids?.data ?? out?.input_ids;
+      if (list) for (const t of list) if (typeof t === "number") ids.add(t);
+    } catch {
+      // tokenizer API mismatch — degrade silently, default Whisper suppression still applies
+    }
+  }
+  extraSuppressTokens = [...ids];
+
   self.postMessage({ type: "ready", model: modelId });
 }
 
@@ -71,10 +90,13 @@ self.onmessage = async (e: MessageEvent) => {
         return_timestamps: false,
         language: "en",
         task: "transcribe",
-        temperature: Math.max(temperature, 0.6),
+        temperature: Math.max(temperature, 0.8),
         no_speech_threshold: 0.99,
         compression_ratio_threshold: 10.0,
         prompt,
+        ...(extraSuppressTokens.length > 0 && {
+          suppress_tokens: extraSuppressTokens,
+        }),
       });
 
       const text: string = (result.text ?? "").trim();
